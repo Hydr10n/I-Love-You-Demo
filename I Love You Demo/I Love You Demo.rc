@@ -52,8 +52,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,6
- PRODUCTVERSION 1,0,0,6
+ FILEVERSION 1,0,0,7
+ PRODUCTVERSION 1,0,0,7
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -69,12 +69,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Hydr10n"
-            VALUE "FileVersion", "1.0.0.6"
+            VALUE "FileVersion", "1.0.0.7"
             VALUE "InternalName", "I Love You Demo.exe"
             VALUE "LegalCopyright", "© 2020 Programmer-Yang_Xun@outlook.com"
             VALUE "OriginalFilename", "I Love You Demo.exe"
             VALUE "ProductName", "I Love You Demo"
-            VALUE "ProductVersion", "1.0.0.6"
+            VALUE "ProductVersion", "1.0.0.7"
         END
     END
     BLOCK "VarFileInfo"
