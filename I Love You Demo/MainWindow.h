@@ -54,7 +54,7 @@ protected:
 		HeartWindowWidth = MainWindowWidth, HeartWindowHeight = MainWindowWidth,
 		FPS = 60, TotalAnimationDuration = 2500, FrameDuration = CalcFrameDuration(FPS);
 
-	BOOL m_bPlay = TRUE, m_bClockwise = TRUE;
+	BOOL m_bFirstFrame = TRUE, m_bPlay = TRUE, m_bClockwise = TRUE;
 	FLOAT m_angleYDelta = CalcTransitionVelocity(360, TotalAnimationDuration, FPS), m_AngleY = 0, m_FrameDurationCount = 0;
 	HANDLE m_hTimer = NULL;
 	ComPtr<ID2D1Factory> m_D2dFactory;
@@ -91,20 +91,22 @@ protected:
 		case WM_PAINT: {
 			PAINTSTRUCT ps;
 			BeginPaint(hWnd, &ps);
-			if (m_bPlay) {
-				m_D2dDeviceContext->BeginDraw();
-				m_D2dDeviceContext->DrawImage(m_D2dBitmapBackground.Get());
-				m_D2dDeviceContext->DrawImage(m_D2d3DPerspectiveTransformEffect.Get());
-				const D2D1_SIZE_F d2dSize = m_D2dHwndRenderTarget->GetSize();
-				const D2D1_RECT_F d2dRect = D2D1::RectF(0, d2dSize.height * 0.9f, d2dSize.width, d2dSize.height);
-				DrawText(m_D2dDeviceContext.Get(), L"Segoe UI", 25, DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER, DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER, L"Copyright \xa9 Programmer-Yang_Xun@outlook.com", D2D1::ColorF(0xf0f0f0), &d2dRect, TRUE);
-				m_D2dDeviceContext->EndDraw();
+			if (m_bFirstFrame)
+				m_bFirstFrame = FALSE;
+			else if (m_bPlay) {
 				if ((m_FrameDurationCount += FrameDuration) > TotalAnimationDuration)
 					m_FrameDurationCount = 0;
 				m_AngleY += (m_bClockwise ? -1 : 1) * m_angleYDelta;
 				m_D2d3DPerspectiveTransformEffect->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP::D2D1_3DPERSPECTIVETRANSFORM_PROP_ROTATION_ORIGIN, D2D1::Vector3F(m_D2dHwndRenderTarget->GetSize().width / 2, 0, 0));
 				m_D2d3DPerspectiveTransformEffect->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP::D2D1_3DPERSPECTIVETRANSFORM_PROP_ROTATION, D2D1::Vector3F(0, m_AngleY, 0));
 			}
+			m_D2dDeviceContext->BeginDraw();
+			m_D2dDeviceContext->DrawImage(m_D2dBitmapBackground.Get());
+			m_D2dDeviceContext->DrawImage(m_D2d3DPerspectiveTransformEffect.Get());
+			const D2D1_SIZE_F d2dSize = m_D2dHwndRenderTarget->GetSize();
+			const D2D1_RECT_F d2dRect = D2D1::RectF(0, d2dSize.height * 0.9f, d2dSize.width, d2dSize.height);
+			DrawText(m_D2dDeviceContext.Get(), L"Segoe UI", 25, DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER, DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER, L"Copyright \xa9 Programmer-Yang_Xun@outlook.com", D2D1::ColorF(0xf0f0f0), &d2dRect, TRUE);
+			m_D2dDeviceContext->EndDraw();
 			EndPaint(hWnd, &ps);
 		}	break;
 		case WM_RBUTTONDOWN: {
@@ -172,11 +174,11 @@ protected:
 
 	static HRESULT Create3DPerspectiveTransformEffect(ID2D1DeviceContext* pD2dDeviceContext, ID2D1Effect** ppD2dEffect) { return pD2dDeviceContext->CreateEffect(CLSID_D2D13DPerspectiveTransform, ppD2dEffect); }
 
-	static HRESULT GradientFillBackground(ID2D1RenderTarget* pD2dRenderTarget, const D2D1_COLOR_F& d2d1ColorStart, const D2D1_COLOR_F& d2d1ColorEnd) {
+	static HRESULT GradientFillBackground(ID2D1RenderTarget* pD2dRenderTarget, const D2D1_COLOR_F& d2dColorStart, const D2D1_COLOR_F& d2dColorEnd) {
 		try {
 			const D2D1_GRADIENT_STOP d2dGradientStops[] = {
-				D2D1::GradientStop(0, d2d1ColorStart),
-				D2D1::GradientStop(1, d2d1ColorEnd)
+				D2D1::GradientStop(0, d2dColorStart),
+				D2D1::GradientStop(1, d2dColorEnd)
 			};
 			const D2D1_SIZE_F d2dSize = pD2dRenderTarget->GetSize();
 			ComPtr<ID2D1GradientStopCollection> d2dGradientStopCollection;
