@@ -6,9 +6,9 @@
 #pragma warning(disable:4996)
 #pragma warning(disable:26812)
 
-#define Scale(iPixels, iDPI) MulDiv((INT)iPixels, (INT)iDPI, USER_DEFAULT_SCREEN_DPI)
-#define CalcFrameDuration(iFPS) (1000 / iFPS)
-#define CalcTransitionVelocity(iSize, iMilliseconds, iFPS) (iSize / (iMilliseconds / 1000.0f * iFPS))
+#define Scale(iPixels, iDPI) MulDiv((int)iPixels, (int)iDPI, USER_DEFAULT_SCREEN_DPI)
+#define CalcFrameDuration(iFPS) (1000.f / iFPS)
+#define CalcTransitionVelocity(iSize, iMilliseconds, iFPS) (iSize / (iMilliseconds / 1000.f * iFPS))
 
 using Microsoft::WRL::ComPtr;
 
@@ -52,10 +52,10 @@ protected:
 
 	static const int MainWindowWidth = 800, MainWindowHeight = MainWindowWidth,
 		HeartWindowWidth = MainWindowWidth, HeartWindowHeight = MainWindowWidth,
-		FPS = 60, TotalAnimationDuration = 2500, FrameDuration = CalcFrameDuration(FPS);
+		FPS = 60, TotalAnimationDuration = 2500, FrameDuration = (int)CalcFrameDuration(FPS);
 
 	BOOL m_bFirstFrame = TRUE, m_bPlay = TRUE, m_bClockwise = TRUE;
-	FLOAT m_angleYDelta = CalcTransitionVelocity(360, TotalAnimationDuration, FPS), m_AngleY = 0, m_FrameDurationCount = 0;
+	FLOAT m_RotationAngleY = 0;
 	HANDLE m_hTimer = NULL;
 	ComPtr<ID2D1Factory> m_D2dFactory;
 	ComPtr<ID2D1HwndRenderTarget> m_D2dHwndRenderTarget;
@@ -78,6 +78,7 @@ protected:
 				ThrowIfFailed(Create3DPerspectiveTransformEffect(m_D2dDeviceContext.Get(), &m_D2d3DPerspectiveTransformEffect));
 				const D2D1_SIZE_F d2dSize = m_D2dHwndRenderTarget->GetSize();
 				m_D2d3DPerspectiveTransformEffect->SetInput(0, m_D2dBitmapForeground.Get());
+				m_D2d3DPerspectiveTransformEffect->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP::D2D1_3DPERSPECTIVETRANSFORM_PROP_ROTATION_ORIGIN, D2D1::Vector3F(d2dSize.width / 2, 0, 0));
 				m_D2d3DPerspectiveTransformEffect->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP::D2D1_3DPERSPECTIVETRANSFORM_PROP_PERSPECTIVE_ORIGIN, D2D1::Vector2F(d2dSize.width / 2, d2dSize.height / 2));
 				ThrowIfFailed(DrawHeart(m_D2dBitmapRenderTargetForeground.Get()));
 				ThrowIfFailed(DrawText(m_D2dBitmapRenderTargetForeground.Get(), L"Comic Sans MS", 30, DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER, DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER, L"I LOVE YOU\nFOREVER", D2D1::ColorF(0xf0f0f0), NULL));
@@ -89,24 +90,15 @@ protected:
 			}
 		}	break;
 		case WM_PAINT: {
-			PAINTSTRUCT ps;
-			BeginPaint(hWnd, &ps);
 			if (m_bFirstFrame)
 				m_bFirstFrame = FALSE;
 			else if (m_bPlay) {
-				if ((m_FrameDurationCount += FrameDuration) > TotalAnimationDuration)
-					m_FrameDurationCount = 0;
-				m_AngleY += (m_bClockwise ? -1 : 1) * m_angleYDelta;
-				m_D2d3DPerspectiveTransformEffect->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP::D2D1_3DPERSPECTIVETRANSFORM_PROP_ROTATION_ORIGIN, D2D1::Vector3F(m_D2dHwndRenderTarget->GetSize().width / 2, 0, 0));
-				m_D2d3DPerspectiveTransformEffect->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP::D2D1_3DPERSPECTIVETRANSFORM_PROP_ROTATION, D2D1::Vector3F(0, m_AngleY, 0));
+				m_RotationAngleY += (m_bClockwise ? -1 : 1) * CalcTransitionVelocity(360, TotalAnimationDuration, FPS);
+				m_D2d3DPerspectiveTransformEffect->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP::D2D1_3DPERSPECTIVETRANSFORM_PROP_ROTATION, D2D1::Vector3F(0, m_RotationAngleY, 0));
 			}
-			m_D2dDeviceContext->BeginDraw();
-			m_D2dDeviceContext->DrawImage(m_D2dBitmapBackground.Get());
-			m_D2dDeviceContext->DrawImage(m_D2d3DPerspectiveTransformEffect.Get());
-			const D2D1_SIZE_F d2dSize = m_D2dHwndRenderTarget->GetSize();
-			const D2D1_RECT_F d2dRect = D2D1::RectF(0, d2dSize.height * 0.9f, d2dSize.width, d2dSize.height);
-			DrawText(m_D2dDeviceContext.Get(), L"Segoe UI", 25, DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER, DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER, L"Copyright \xa9 Programmer-Yang_Xun@outlook.com", D2D1::ColorF(0xf0f0f0), &d2dRect, TRUE);
-			m_D2dDeviceContext->EndDraw();
+			PAINTSTRUCT ps;
+			BeginPaint(hWnd, &ps);
+			Render();
 			EndPaint(hWnd, &ps);
 		}	break;
 		case WM_RBUTTONDOWN: {
@@ -162,6 +154,16 @@ protected:
 	void WaitTimer() {
 		if (MsgWaitForMultipleObjects(1, &m_hTimer, FALSE, INFINITE, QS_ALLINPUT) == WAIT_OBJECT_0)
 			InvalidateRect(m_hWnd, NULL, FALSE);
+	}
+
+	HRESULT Render() {
+		m_D2dDeviceContext->BeginDraw();
+		m_D2dDeviceContext->DrawImage(m_D2dBitmapBackground.Get());
+		m_D2dDeviceContext->DrawImage(m_D2d3DPerspectiveTransformEffect.Get());
+		const D2D1_SIZE_F d2dSize = m_D2dHwndRenderTarget->GetSize();
+		const D2D1_RECT_F d2dRect = D2D1::RectF(0, d2dSize.height * 0.9f, d2dSize.width, d2dSize.height);
+		DrawText(m_D2dDeviceContext.Get(), L"Segoe UI", 25, DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER, DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER, L"Copyright \xa9 Programmer-Yang_Xun@outlook.com", D2D1::ColorF(0xf0f0f0), &d2dRect, TRUE);
+		return m_D2dDeviceContext->EndDraw();
 	}
 
 	static HRESULT CreateHwndRenderTarget(ID2D1Factory* pD2dFactory, HWND hWnd, ID2D1HwndRenderTarget** ppD2dHwndRenderTarget) {
@@ -246,14 +248,14 @@ protected:
 			static const FLOAT pi = 3.14159265f, radius = 1, width = radius * 4, height = radius + pi, ratio = width / height;
 			const D2D1_SIZE_F d2dSizeNew = { d2dSize.width * 0.8f, d2dSize.height * 0.8f };
 			const FLOAT magnification = floorf((d2dSizeNew.width / d2dSizeNew.height < ratio ? d2dSizeNew.width : d2dSizeNew.height * ratio) / width),
-				actualRadius = floorf(radius * magnification) * 2;
+				fullRadius = floorf(radius * magnification) * 2;
 			const D2D1_POINT_2F origin = D2D1::Point2F(d2dSize.width / 2, d2dSize.height / 2 - (height / 2 - radius) * magnification),
-				d2d1StartPoint = D2D1::Point2F(origin.x - actualRadius, (-acosf(1 - 1 / magnification * actualRadius) + pi) * magnification + origin.y);
+				d2d1StartPoint = D2D1::Point2F(origin.x - fullRadius, (-acosf(1 - 1 / magnification * fullRadius) + pi) * magnification + origin.y);
 			d2dGeometrySink->BeginFigure(d2d1StartPoint, D2D1_FIGURE_BEGIN_FILLED);
-			for (FLOAT x = -actualRadius + 1; x <= actualRadius; x++)
+			for (FLOAT x = -fullRadius + 1; x <= fullRadius; x++)
 				d2dGeometrySink->AddLine(D2D1::Point2F(origin.x + x, (-acosf(1 - 1 / magnification * fabsf(x)) + pi) * magnification + origin.y));
-			d2dGeometrySink->AddArc(D2D1::ArcSegment(D2D1::Point2F(origin.x, origin.y), D2D1::SizeF(actualRadius / 2, actualRadius / 2), 0, D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE, D2D1_ARC_SIZE_SMALL));
-			d2dGeometrySink->AddArc(D2D1::ArcSegment(d2d1StartPoint, D2D1::SizeF(actualRadius / 2, actualRadius / 2), 0, D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE, D2D1_ARC_SIZE_SMALL));
+			d2dGeometrySink->AddArc(D2D1::ArcSegment(D2D1::Point2F(origin.x, origin.y), D2D1::SizeF(fullRadius / 2, fullRadius / 2), 0, D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE, D2D1_ARC_SIZE_SMALL));
+			d2dGeometrySink->AddArc(D2D1::ArcSegment(d2d1StartPoint, D2D1::SizeF(fullRadius / 2, fullRadius / 2), 0, D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE, D2D1_ARC_SIZE_SMALL));
 			d2dGeometrySink->EndFigure(D2D1_FIGURE_END_CLOSED);
 			ThrowIfFailed(d2dGeometrySink->Close());
 			pD2dRenderTarget->BeginDraw();
