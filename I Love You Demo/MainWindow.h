@@ -51,7 +51,6 @@ protected:
 	};
 
 	static const int MainWindowWidth = 800, MainWindowHeight = MainWindowWidth,
-		HeartWindowWidth = MainWindowWidth, HeartWindowHeight = MainWindowWidth,
 		FPS = 60, TotalAnimationDuration = 2500, FrameDuration = (int)CalcFrameDuration(FPS);
 
 	BOOL m_bFirstFrame = TRUE, m_bPlay = TRUE, m_bClockwise = TRUE;
