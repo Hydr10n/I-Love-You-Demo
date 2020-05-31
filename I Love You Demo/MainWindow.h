@@ -6,9 +6,9 @@
 #pragma warning(disable:4996)
 #pragma warning(disable:26812)
 
-#define Scale(iPixels, iDPI) MulDiv((int)iPixels, (int)iDPI, USER_DEFAULT_SCREEN_DPI)
-#define CalcFrameDuration(iFPS) (1000.f / iFPS)
-#define CalcTransitionVelocity(iSize, iMilliseconds, iFPS) (iSize / (iMilliseconds / 1000.f * iFPS))
+#define Scale(iPixels, iDPI) MulDiv((int)(iPixels), (int)(iDPI), USER_DEFAULT_SCREEN_DPI)
+#define CalcFrameDuration(iFPS) (1000.f / (iFPS))
+#define CalcTransitionVelocity(iSize, iMilliseconds, iFPS) ((iSize) / ((iMilliseconds) / 1000.f * (iFPS)))
 
 using Microsoft::WRL::ComPtr;
 
