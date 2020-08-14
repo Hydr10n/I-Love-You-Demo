@@ -2,12 +2,8 @@
 
 #include <Windows.h>
 #include <windowsx.h>
-#include <wrl.h>
-#include <d2d1.h>
-#include <d2d1_1.h>
-#include <d2d1effects.h>
-#include <dwrite.h>
-#include <math.h>
+#include "SystemErrorHelpers.h"
+#include "DirectXHelpers.h"
 
 #pragma comment(lib, "d2d1")
 #pragma comment(lib, "dxguid")
@@ -24,16 +20,3 @@
 #ifndef _UNICODE
 #define _UNICODE
 #endif
-
-template <class Interface>
-inline void SafeRelease(Interface** ppInterfaceToRelease) {
-    if (*ppInterfaceToRelease != nullptr) {
-        (*ppInterfaceToRelease)->Release();
-        *ppInterfaceToRelease = nullptr;
-    }
-}
-
-inline void ThrowIfFailed(HRESULT hr) {
-    if (FAILED(hr))
-        throw hr;
-}

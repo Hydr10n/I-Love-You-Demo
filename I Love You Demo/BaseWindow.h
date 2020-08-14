@@ -2,55 +2,69 @@
 
 #include <Windows.h>
 
-template <class DerivedWindow>
-class BaseWindow {
-public:
-	HWND GetWindowHandle() const { return m_hWnd; }
+namespace Hydr10n {
+	namespace Windows {
+		class BaseWindow {
+		public:
+			virtual ~BaseWindow() {
+				if (m_hWnd) {
+					SetWindowLongPtrW(m_hWnd, GWLP_USERDATA, 0);
+					DestroyWindow(m_hWnd);
+					UnregisterClassW(m_WndClassEx.lpszClassName, m_WndClassEx.hInstance);
+				}
+			}
 
-protected:
-	HWND m_hWnd = NULL;
-	WNDCLASSEXW wndClassEx = { sizeof(wndClassEx) };
+			HWND GetWindowHandle() const { return m_hWnd; }
 
-	BaseWindow() {
-		wndClassEx.lpszClassName = L"BaseWindow";
-		wndClassEx.lpfnWndProc = WindowProc;
-		wndClassEx.hInstance = GetModuleHandleW(NULL);
-	}
+		private:
+			HWND m_hWnd = NULL;
+			WNDCLASSEXW m_WndClassEx = { sizeof(m_WndClassEx) };
 
-	void SetWndClassEx(LPCWSTR lpszClassName, HICON hIcon = NULL, HCURSOR hCursor = NULL, HBRUSH hbrBackground = NULL, UINT style = 0, int cbClsExtra = 0, int cbWndExtra = 0, LPCWSTR lpszMenuName = NULL, HICON hIconSm = NULL) {
-		wndClassEx.lpszClassName = lpszClassName;
-		wndClassEx.hIcon = hIcon;
-		wndClassEx.hCursor = hCursor;
-		wndClassEx.hbrBackground = hbrBackground;
-		wndClassEx.style = style;
-		wndClassEx.cbClsExtra = cbClsExtra;
-		wndClassEx.cbWndExtra = cbWndExtra;
-		wndClassEx.lpszMenuName = lpszMenuName;
-		wndClassEx.hIconSm = hIconSm;
-	}
+			static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+				BaseWindow* _this = (BaseWindow*)(uMsg == WM_NCCREATE ? ((LPCREATESTRUCT)lParam)->lpCreateParams : (LPVOID)GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+				if (_this)
+					return _this->HandleMessage(hWnd, uMsg, wParam, lParam);
+				return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+			}
 
-	BOOL Initialize(DWORD dwExStyle, LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu) {
-		RegisterClassExW(&wndClassEx);
-		m_hWnd = CreateWindowExW(dwExStyle, wndClassEx.lpszClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, wndClassEx.hInstance, this);
-		BOOL ret = m_hWnd != NULL;
-		if (!ret)
-			UnregisterClassW(wndClassEx.lpszClassName, wndClassEx.hInstance);
-		return ret;
-	}
+		protected:
+			BaseWindow(LPCWSTR lpszClassName = L"BaseWindow",
+				UINT style = 0,
+				LPCWSTR lpszMenuName = NULL,
+				HBRUSH hbrBackground = (HBRUSH)(COLOR_WINDOW + 1),
+				HICON hIcon = LoadIcon(NULL, IDI_APPLICATION),
+				HCURSOR hCursor = LoadCursor(NULL, IDC_ARROW)) {
+				m_WndClassEx.style = style;
+				m_WndClassEx.lpszMenuName = lpszMenuName;
+				m_WndClassEx.hbrBackground = hbrBackground;
+				m_WndClassEx.lpszClassName = lpszClassName;
+				m_WndClassEx.hIcon = hIcon;
+				m_WndClassEx.hCursor = hCursor;
+				m_WndClassEx.hInstance = (HINSTANCE)GetModuleHandle(NULL);
+				m_WndClassEx.lpfnWndProc = WindowProc;
+			}
 
-	static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-		BaseWindow<DerivedWindow>* pThis = NULL;
-		if (uMsg == WM_NCCREATE) {
-			LPCREATESTRUCT pCreateStruct = (LPCREATESTRUCT)lParam;
-			pThis = (DerivedWindow*)pCreateStruct->lpCreateParams;
-			SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)pThis);
-		}
-		else
-			pThis = (DerivedWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-		if (pThis)
-			return pThis->HandleMessage(hWnd, uMsg, wParam, lParam);
-		return DefWindowProc(hWnd, uMsg, wParam, lParam);
-	}
+			BaseWindow(const WNDCLASSEXW& wndClassEx) { m_WndClassEx = wndClassEx; }
 
-	virtual LRESULT CALLBACK HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) = 0;
-};
+			const WNDCLASSEXW& GetWndClassEx() const { return m_WndClassEx; }
+
+			BOOL Initialize(DWORD dwExStyle, LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu) {
+				if (m_hWnd) {
+					SetLastError(ERROR_ALREADY_INITIALIZED);
+					return FALSE;
+				}
+				RegisterClassExW(&m_WndClassEx);
+				if (m_hWnd = CreateWindowExW(dwExStyle, m_WndClassEx.lpszClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, m_WndClassEx.hInstance, this)) {
+					SetWindowLongPtrW(m_hWnd, GWLP_USERDATA, (LONG_PTR)this);
+					return TRUE;
+				}
+				const DWORD dwLastError = GetLastError();
+				UnregisterClassW(m_WndClassEx.lpszClassName, m_WndClassEx.hInstance);
+				SetLastError(dwLastError);
+				return FALSE;
+			}
+
+			virtual LRESULT CALLBACK HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) = 0;
+		};
+	};
+}
