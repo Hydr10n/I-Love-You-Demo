@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Windows.h>
+#include <windowsx.h>
 
 namespace Hydr10n {
 	namespace Windows {
@@ -17,8 +18,8 @@ namespace Hydr10n {
 			HWND GetWindowHandle() const { return m_hWnd; }
 
 		private:
-			HWND m_hWnd = NULL;
-			WNDCLASSEXW m_WndClassEx = { sizeof(m_WndClassEx) };
+			HWND m_hWnd{};
+			WNDCLASSEXW m_WndClassEx{ sizeof(m_WndClassEx) };
 
 			static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 				BaseWindow* _this = (BaseWindow*)(uMsg == WM_NCCREATE ? ((LPCREATESTRUCT)lParam)->lpCreateParams : (LPVOID)GetWindowLongPtrW(hWnd, GWLP_USERDATA));
@@ -31,7 +32,7 @@ namespace Hydr10n {
 			BaseWindow(LPCWSTR lpszClassName = L"BaseWindow",
 				UINT style = 0,
 				LPCWSTR lpszMenuName = NULL,
-				HBRUSH hbrBackground = (HBRUSH)(COLOR_WINDOW + 1),
+				HBRUSH hbrBackground = GetStockBrush(WHITE_BRUSH),
 				HICON hIcon = LoadIcon(NULL, IDI_APPLICATION),
 				HCURSOR hCursor = LoadCursor(NULL, IDC_ARROW)) {
 				m_WndClassEx.style = style;

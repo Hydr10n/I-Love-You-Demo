@@ -1,6 +1,6 @@
 /*
  * Project Name: I Love You Demo
- * Last Update: 2020/08/14
+ * Last Update: 2020/08/24
  * 
  * This project is hosted on https://github.com/Hydr10n/I-Love-You-Demo
  * Copyright (C) Programmer-Yang_Xun@outlook.com. All Rights Reserved.
@@ -9,19 +9,20 @@
 #include "pch.h"
 #include "MainWindow.h"
 
-#pragma warning(disable:28252)
-int APIENTRY wWinMain(HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nShowCmd) {
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow) {
 	bool isExceptionCaught = true;
 	DWORD ret;
 	try {
-		MainWindow mainWindow;
-		ret = mainWindow.Run();
+		ret = MainWindow().Run();
 		isExceptionCaught = false;
 	}
-	catch (HRESULT hr) { ret = Hydr10n::SystemErrorHelpers::WIN32_FROM_HRESULT(hr); }
-	catch (DWORD dwLastError) { ret = dwLastError; }
+	catch (const std::system_error& e) { ret = (DWORD)e.code().value(); }
+	catch (const std::exception& e) {
+		MessageBoxA(NULL, e.what(), NULL, MB_OK | MB_ICONERROR);
+		return ERROR_CAN_NOT_COMPLETE;
+	}
 	catch (...) { ret = GetLastError(); }
 	if (isExceptionCaught && ret != ERROR_SUCCESS)
-		MessageBoxW(NULL, SystemErrorMessage(ret), NULL, MB_OK | MB_ICONERROR);
+		MessageBoxA(NULL, std::system_category().message((int)ret).c_str(), NULL, MB_OK | MB_ICONERROR);
 	return (int)ret;
 }

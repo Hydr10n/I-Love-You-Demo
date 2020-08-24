@@ -1,7 +1,7 @@
-# I-Love-You-Demo
+# I Love You Demo
 
-Real-time rendering of a glowing & rotating heart image and texts at solid 60 FPS with GPU using the hardware-accelerated graphics API [Direct2D] and [DirectWrite].
+Real-time rendering of a glowing & rotating heart image and texts at maximum 60 FPS using GPU and the hardware-accelerated graphics API **Direct2D** & **DirectWrite**.
 
-The animations can be controlled in the context menu, and glow & rotation of the heart image can be controlled with mouse.
+Window mode, resolution, FPS visibility and animations can be controlled in the context menu; glow & rotation of the heart image can be controlled with mouse. Pressing [Alt + Enter] toggles between windowed/borderless and full-screen mode.
 
-![image](Snapshots/I-Love-You-Demo.gif)
+<img src="Snapshots/I-Love-You-Demo.gif" width="500" height="500"/>

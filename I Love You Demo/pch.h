@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 #include <windowsx.h>
+#include <string>
 #include "SystemErrorHelpers.h"
 #include "DirectXHelpers.h"
 

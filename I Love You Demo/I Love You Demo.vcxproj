@@ -142,14 +142,18 @@
     <ClCompile Include="App.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AppData.h" />
     <ClInclude Include="BaseWindow.h" />
     <ClInclude Include="DirectXHelpers.h" />
+    <ClInclude Include="WindowUtils.h" />
+    <ClInclude Include="DisplayUtils.h" />
     <ClInclude Include="MainWindow.h" />
+    <ClInclude Include="MyAppSettingsData.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ILoveYouDemo.h" />
+    <ClInclude Include="StepTimer.h" />
     <ClInclude Include="SystemErrorHelpers.h" />
-    <ClInclude Include="MessageTimer.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="I Love You Demo.rc" />
