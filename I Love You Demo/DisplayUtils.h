@@ -51,7 +51,7 @@ namespace Hydr10n {
 				const auto iteratorBegin = m_SystemDisplayResolutions.cbegin(), iteratorEnd = m_SystemDisplayResolutions.cend(), iterator = std::find(iteratorBegin, iteratorEnd, displayResolution);
 				if (iterator == iteratorEnd)
 					return -1;
-				return (int)(iterator - iteratorBegin);
+				return int(iterator - iteratorBegin);
 			}
 
 			bool Contains(const DisplayResolution& displayResolution) const { return IndexOf(displayResolution) != -1; }

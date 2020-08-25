@@ -132,7 +132,7 @@ private:
 				isPlayingGlowAnimation = animationSet.Contains(ILoveYouDemo::AnimationSet::AnimationType::Glow),
 				isPlayingRotationAnimation = animationSet.Contains(ILoveYouDemo::AnimationSet::AnimationType::Rotation),
 				isRotationClockwise = m_ILoveYouDemo->IsRotationClockwise();
-			LPCWSTR lpcwPlayAnimation = L"Play Animation", lpcwReset = L"Reset";
+			const LPCWSTR lpcwPlayAnimation = L"Play Animation", lpcwReset = L"Reset";
 			HMENU hMenu = CreatePopupMenu(), hMenuWindowMode = CreatePopupMenu(), hMenuResolution = CreatePopupMenu(), hMenuGlow = CreatePopupMenu(), hMenuRotation = CreatePopupMenu();
 			AppendMenuW(hMenu, MF_POPUP, (UINT_PTR)hMenuWindowMode, L"Window Mode");
 			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::Windowed ? MF_CHECKED : MF_UNCHECKED), (UINT_PTR)MenuID::WindowModeWindowed, L"Windowed");
@@ -142,17 +142,17 @@ private:
 			for (size_t i = 0; i != m_SystemDisplayResolutionSet.Count(); i++) {
 				const auto& systemDisplayResolution = m_SystemDisplayResolutionSet[i];
 				if (systemDisplayResolution >= MinDisplayResolution)
-					AppendMenuW(hMenuResolution, MF_STRING | (resolution == systemDisplayResolution ? MF_CHECKED : MF_UNCHECKED), (UINT_PTR)((size_t)MenuID::FirstResolution + i), (std::to_wstring(systemDisplayResolution.PixelWidth) + L" × " + std::to_wstring(systemDisplayResolution.PixelHeight)).c_str());
+					AppendMenuW(hMenuResolution, MF_STRING | (resolution == systemDisplayResolution ? MF_CHECKED : MF_UNCHECKED), UINT_PTR((size_t)MenuID::FirstResolution + i), (std::to_wstring(systemDisplayResolution.PixelWidth) + L" × " + std::to_wstring(systemDisplayResolution.PixelHeight)).c_str());
 			}
-			AppendMenuW(hMenu, MF_STRING | (isFramesPerSecondVisible ? MF_CHECKED : MF_UNCHECKED), (UINT_PTR)(isFramesPerSecondVisible ? MenuID::HideFramesPerSecond : MenuID::ShowFramesPerSecond), L"Show FPS");
+			AppendMenuW(hMenu, MF_STRING | (isFramesPerSecondVisible ? MF_CHECKED : MF_UNCHECKED), UINT_PTR(isFramesPerSecondVisible ? MenuID::HideFramesPerSecond : MenuID::ShowFramesPerSecond), L"Show FPS");
 			AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
 			AppendMenuW(hMenu, MF_POPUP, (UINT_PTR)hMenuGlow, L"Glow");
-			AppendMenuW(hMenuGlow, MF_STRING | (isPlayingGlowAnimation ? MF_CHECKED : MF_UNCHECKED), (UINT_PTR)(isPlayingGlowAnimation ? MenuID::GlowPauseAnimation : MenuID::GlowPlayAnimation), lpcwPlayAnimation);
+			AppendMenuW(hMenuGlow, MF_STRING | (isPlayingGlowAnimation ? MF_CHECKED : MF_UNCHECKED), UINT_PTR(isPlayingGlowAnimation ? MenuID::GlowPauseAnimation : MenuID::GlowPlayAnimation), lpcwPlayAnimation);
 			AppendMenuW(hMenuGlow, MF_STRING, (UINT_PTR)MenuID::GlowReset, lpcwReset);
 			AppendMenuW(hMenu, MF_POPUP, (UINT_PTR)hMenuRotation, L"Rotation");
-			AppendMenuW(hMenuRotation, MF_STRING | (isPlayingRotationAnimation ? MF_CHECKED : MF_UNCHECKED), (UINT_PTR)(isPlayingRotationAnimation ? MenuID::RotationPauseAnimation : MenuID::RotationPlayAnimation), lpcwPlayAnimation);
+			AppendMenuW(hMenuRotation, MF_STRING | (isPlayingRotationAnimation ? MF_CHECKED : MF_UNCHECKED), UINT_PTR(isPlayingRotationAnimation ? MenuID::RotationPauseAnimation : MenuID::RotationPlayAnimation), lpcwPlayAnimation);
 			AppendMenuW(hMenuRotation, MF_STRING, (UINT_PTR)MenuID::RotationReset, lpcwReset);
-			AppendMenuW(hMenuRotation, MF_STRING | (isRotationClockwise ? MF_CHECKED : MF_UNCHECKED), (UINT_PTR)(isRotationClockwise ? MenuID::RotationCounterclockwise : MenuID::RotationClockwise), L"Clockwise");
+			AppendMenuW(hMenuRotation, MF_STRING | (isRotationClockwise ? MF_CHECKED : MF_UNCHECKED), UINT_PTR(isRotationClockwise ? MenuID::RotationCounterclockwise : MenuID::RotationClockwise), L"Clockwise");
 			AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
 			AppendMenuW(hMenu, MF_STRING, (UINT_PTR)MenuID::ViewSourceCodeOnGitHub, L"View Source Code on GitHub");
 			AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);

@@ -45,13 +45,13 @@ public:
 
 	static bool Save(const Hydr10n::DisplayUtils::DisplayResolution& data) {
 		using Hydr10n::DataUtils::AppData;
-		LPCWSTR lpcwSection = ToString(Section::DisplaySettings), lpcwFilePath = GetFilePath();
+		const LPCWSTR lpcwSection = ToString(Section::DisplaySettings), lpcwFilePath = GetFilePath();
 		return AppData<DWORD>::Save(lpcwSection, KeyResolutionWidth, lpcwFilePath, data.PixelWidth) && AppData<DWORD>::Save(lpcwSection, KeyResolutionHeight, lpcwFilePath, data.PixelHeight);
 	}
 
 	static bool Load(Hydr10n::DisplayUtils::DisplayResolution& data) {
 		using Hydr10n::DataUtils::AppData;
-		LPCWSTR lpcwSection = ToString(Section::DisplaySettings), lpcwFilePath = GetFilePath();
+		const LPCWSTR lpcwSection = ToString(Section::DisplaySettings), lpcwFilePath = GetFilePath();
 		const bool ret = AppData<DWORD>::Load(lpcwSection, KeyResolutionWidth, lpcwFilePath, data.PixelWidth) && AppData<DWORD>::Load(lpcwSection, KeyResolutionHeight, lpcwFilePath, data.PixelHeight);
 		if (!ret)
 			data = {};
@@ -70,7 +70,7 @@ private:
 
 	static bool RemoveSubstringStartingWithSpace(LPWSTR str) {
 		const std::wstring wstr(str);
-		const auto iteratorBegin = wstr.cbegin(), iteratorEnd = wstr.cend(), iterator = std::find_if(iteratorBegin, iteratorEnd, [](wchar_t ch) { return iswspace(ch); });
+		const auto iteratorBegin = wstr.cbegin(), iteratorEnd = wstr.cend(), iterator = std::find_if(iteratorBegin, iteratorEnd, [](wchar_t ch) { return iswspace((wint_t)ch); });
 		if (iterator == iteratorEnd)
 			return false;
 		str[(iterator - iteratorBegin)] = 0;
@@ -96,7 +96,7 @@ private:
 	static LPCWSTR ToString(bool val) { return val ? L"true" : L"false"; }
 
 	static bool ToValue(LPCWSTR str, bool& val) {
-		std::wstring wstr(str);
+		const std::wstring wstr(str);
 		if (wstr == ToString(true))
 			val = true;
 		else {
@@ -108,13 +108,13 @@ private:
 	}
 
 	static LPCWSTR ToString(Hydr10n::WindowHelpers::WindowMode val) {
-		LPCWSTR strs[] = { L"Windowed", L"Borderless", L"FullScreen" };
+		const LPCWSTR strs[] = { L"Windowed", L"Borderless", L"FullScreen" };
 		return strs[(size_t)val];
 	}
 
 	static bool ToValue(LPCWSTR str, Hydr10n::WindowHelpers::WindowMode& val) {
 		using Hydr10n::WindowHelpers::WindowMode;
-		std::wstring wstr(str);
+		const std::wstring wstr(str);
 		if (wstr == ToString(WindowMode::Borderless))
 			val = WindowMode::Borderless;
 		else if (wstr == ToString(WindowMode::FullScreen))

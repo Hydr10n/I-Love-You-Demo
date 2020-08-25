@@ -111,7 +111,7 @@ namespace Hydr10n {
 				using namespace SystemErrorHelpers;
 				if (!m_D2dEffect3DPerspectiveTransform)
 					throw_system_error((int)D2DERR_NOT_INITIALIZED);
-				y -= (int)(y / 360) * 360;
+				y -= int(y / 360) * 360;
 				ThrowIfFailed(m_D2dEffect3DPerspectiveTransform->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP::D2D1_3DPERSPECTIVETRANSFORM_PROP_ROTATION, D2D1::Vector3F(0, y)));
 				m_ForegroundRotationY = y;
 				if (m_IsInitialized && !IsRunning())

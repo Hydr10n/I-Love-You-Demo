@@ -29,7 +29,7 @@ namespace Hydr10n {
 				RECT rc = { 0, 0, (LONG)resolution.PixelWidth, (LONG)resolution.PixelHeight };
 				if (!CenterMainWindow(rc) || (m_Mode == WindowMode::Windowed && !AdjustWindowRectEx(&rc, m_WindowedModeStyle, m_HasMenu, m_WindowedModeExStyle)))
 					return false;
-				const bool ret = SetWindowPos(m_hWnd, HWND_TOP, (int)rc.left, (int)rc.top, (int)(rc.right - rc.left), (int)(rc.bottom - rc.top), SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOSENDCHANGING);
+				const bool ret = SetWindowPos(m_hWnd, HWND_TOP, (int)rc.left, (int)rc.top, int(rc.right - rc.left), int(rc.bottom - rc.top), SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOSENDCHANGING);
 				if (ret)
 					m_Resolution = resolution;
 				return ret;
