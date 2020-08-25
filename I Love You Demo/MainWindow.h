@@ -2,7 +2,6 @@
 
 #pragma warning(disable:4996)
 
-#include "pch.h"
 #include "BaseWindow.h"
 #include "ILoveYouDemo.h"
 #include "MyAppSettingsData.h"
@@ -13,7 +12,7 @@
 class MainWindow final : public Hydr10n::Windows::BaseWindow {
 public:
 	MainWindow() noexcept(false) : BaseWindow(L"Direct2D") {
-		using namespace Hydr10n::WindowHelpers;
+		using namespace Hydr10n::WindowUtils;
 		using Hydr10n::SystemErrorHelpers::ThrowIfFailed;
 		ThrowIfFailed(Initialize(0, L"I Love You Demo", 0, 0, 0, 0, 0, NULL, NULL));
 		Microsoft::WRL::ComPtr<ID2D1Factory> d2dFactory;
@@ -70,12 +69,12 @@ private:
 	bool m_HasTitleBar;
 	int m_CursorCoordinateX{};
 	RECT m_ClientRect{};
-	std::unique_ptr<Hydr10n::WindowHelpers::WindowModeUtil> m_WindowModeHelper;
+	std::unique_ptr<Hydr10n::WindowUtils::WindowModeUtil> m_WindowModeHelper;
 	std::unique_ptr<Hydr10n::Demos::ILoveYouDemo> m_ILoveYouDemo;
 
 	LRESULT CALLBACK HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override {
 		using Hydr10n::Demos::ILoveYouDemo;
-		using Hydr10n::WindowHelpers::WindowMode;
+		using Hydr10n::WindowUtils::WindowMode;
 		enum class MenuID {
 			WindowModeWindowed, WindowModeBorderless, WindowModeFullScreen,
 			ShowFramesPerSecond, HideFramesPerSecond,

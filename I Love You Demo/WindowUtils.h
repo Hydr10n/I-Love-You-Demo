@@ -4,7 +4,7 @@
 #include "DisplayUtils.h"
 
 namespace Hydr10n {
-	namespace WindowHelpers {
+	namespace WindowUtils {
 		inline BOOL WINAPI CenterMainWindow(RECT& rc) {
 			const LONG cxScreen = GetSystemMetrics(SM_CXSCREEN), cyScreen = GetSystemMetrics(SM_CYSCREEN);
 			const BOOL ret = cxScreen && cyScreen;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "pch.h"
 #include "AppData.h"
 #include "WindowUtils.h"
 #include <utility>
@@ -29,9 +28,9 @@ public:
 		return ret;
 	}
 
-	static bool Save(Hydr10n::WindowHelpers::WindowMode data) { return Hydr10n::DataUtils::AppData<LPCWSTR>::Save(ToString(Section::DisplaySettings), KeyWindowMode, GetFilePath(), ToString(data)); }
+	static bool Save(Hydr10n::WindowUtils::WindowMode data) { return Hydr10n::DataUtils::AppData<LPCWSTR>::Save(ToString(Section::DisplaySettings), KeyWindowMode, GetFilePath(), ToString(data)); }
 
-	static bool Load(Hydr10n::WindowHelpers::WindowMode& data) {
+	static bool Load(Hydr10n::WindowUtils::WindowMode& data) {
 		WCHAR buffer[12];
 		bool ret = Hydr10n::DataUtils::AppData<LPCWSTR>::Load(ToString(Section::DisplaySettings), KeyWindowMode, GetFilePath(), buffer, ARRAYSIZE(buffer));
 		if (ret) {
@@ -107,13 +106,13 @@ private:
 		return true;
 	}
 
-	static LPCWSTR ToString(Hydr10n::WindowHelpers::WindowMode val) {
+	static LPCWSTR ToString(Hydr10n::WindowUtils::WindowMode val) {
 		const LPCWSTR strs[] = { L"Windowed", L"Borderless", L"FullScreen" };
 		return strs[(size_t)val];
 	}
 
-	static bool ToValue(LPCWSTR str, Hydr10n::WindowHelpers::WindowMode& val) {
-		using Hydr10n::WindowHelpers::WindowMode;
+	static bool ToValue(LPCWSTR str, Hydr10n::WindowUtils::WindowMode& val) {
+		using Hydr10n::WindowUtils::WindowMode;
 		const std::wstring wstr(str);
 		if (wstr == ToString(WindowMode::Borderless))
 			val = WindowMode::Borderless;
