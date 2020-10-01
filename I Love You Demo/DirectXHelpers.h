@@ -37,7 +37,8 @@ namespace Hydr10n {
 				ThrowIfFailed(pD2dRenderTarget->CreateGradientStopCollection(pD2dGradientStops, gradientStopsCount, &d2dGradientStopCollection));
 				ThrowIfFailed(pD2dRenderTarget->CreateLinearGradientBrush(pD2dLinearGradientBrushProperties, d2dGradientStopCollection.Get(), ppD2dLinearGradientBrush));
 			}
-			catch (HRESULT hr) { return hr; }
+			catch (const std::system_error& e) { return (HRESULT)e.code().value(); }
+			catch (...) { return E_FAIL; }
 			return S_OK;
 		}
 
@@ -56,7 +57,8 @@ namespace Hydr10n {
 				ThrowIfFailed(dwriteTextFormat->SetParagraphAlignment(dwriteParagraphAlignment));
 				pD2dRenderTarget->DrawTextW(pcwText, lstrlenW(pcwText), dwriteTextFormat.Get(), pD2dRect ? *pD2dRect : D2D1::RectF(0, 0, d2dSize.width, d2dSize.height), d2dSolidBrush.Get());
 			}
-			catch (HRESULT hr) { return hr; }
+			catch (const std::system_error& e) { return (HRESULT)e.code().value(); }
+			catch (...) { return E_FAIL; }
 			return S_OK;
 		}
 	}
