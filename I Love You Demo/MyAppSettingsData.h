@@ -2,7 +2,6 @@
 
 #include "AppData.h"
 #include "WindowUtils.h"
-#include <utility>
 
 class MyAppSettingsData final {
 public:

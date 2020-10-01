@@ -11,7 +11,7 @@ namespace Hydr10n {
 
 			static bool Load(LPCWSTR lpcwSection, LPCWSTR lpcwKey, LPCWSTR lpcwFilePath, T& data) {
 				WCHAR buffer[1025];
-				bool ret = GetPrivateProfileStringW(lpcwSection, lpcwKey, NULL, buffer, ARRAYSIZE(buffer), lpcwFilePath);
+				bool ret = GetPrivateProfileStringW(lpcwSection, lpcwKey, NULL, buffer, ARRAYSIZE(buffer), lpcwFilePath) || !GetLastError();
 				if (ret) {
 					WCHAR ch;
 					std::wistringstream istringstream(buffer);
@@ -27,7 +27,7 @@ namespace Hydr10n {
 		struct AppData<LPCWSTR> final {
 			static bool Save(LPCWSTR lpcwSection, LPCWSTR lpcwKey, LPCWSTR lpcwFilePath, LPCWSTR data) { return WritePrivateProfileStringW(lpcwSection, lpcwKey, data, lpcwFilePath); }
 
-			static bool Load(LPCWSTR lpcwSection, LPCWSTR lpcwKey, LPCWSTR lpcwFilePath, LPWSTR data, DWORD nSize) { return GetPrivateProfileStringW(lpcwSection, lpcwKey, NULL, data, nSize, lpcwFilePath); }
+			static bool Load(LPCWSTR lpcwSection, LPCWSTR lpcwKey, LPCWSTR lpcwFilePath, LPWSTR data, DWORD nSize) { return GetPrivateProfileStringW(lpcwSection, lpcwKey, NULL, data, nSize, lpcwFilePath) || !GetLastError(); }
 		};
 	}
 }

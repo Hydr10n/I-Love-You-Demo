@@ -5,7 +5,7 @@
 #include <d2d1effects.h>
 #include <set>
 
-#define CalculateTransitionVelocity(iValue, iMilliseconds, iFPS) ((int)(iValue) / ((int)(iMilliseconds) / 1000.f * (int)(iFPS)))
+#define CalculateTransitionSpeed(iValue, iMilliseconds, iFPS) ((int)(iValue) / ((int)(iMilliseconds) / 1000.f * (int)(iFPS)))
 
 namespace Hydr10n {
 	namespace Demos {
@@ -209,14 +209,14 @@ namespace Hydr10n {
 			void Update() {
 				if (m_StepTimer.GetFrameCount() > 1) {
 					if (m_AnimationSet.Contains(AnimationSet::AnimationType::Glow)) {
-						SetForegroundGlowRadiusScale(m_ForegroundGlowRadiusScale + (m_IsGlowFadeIn ? 1 : -1) * CalculateTransitionVelocity(1, GlowAnimationDuration, FPS));
+						SetForegroundGlowRadiusScale(m_ForegroundGlowRadiusScale + (m_IsGlowFadeIn ? 1 : -1) * CalculateTransitionSpeed(1, GlowAnimationDuration, FPS));
 						if (m_ForegroundGlowRadiusScale >= 1)
 							m_IsGlowFadeIn = false;
 						else if (m_ForegroundGlowRadiusScale <= 0)
 							m_IsGlowFadeIn = true;
 					}
 					if (m_AnimationSet.Contains(AnimationSet::AnimationType::Rotation))
-						SetForegroundRotationY(m_ForegroundRotationY + (m_IsRotationClockwise ? -1 : 1) * CalculateTransitionVelocity(360, RotationAnimationDuration, FPS));
+						SetForegroundRotationY(m_ForegroundRotationY + (m_IsRotationClockwise ? -1 : 1) * CalculateTransitionSpeed(360, RotationAnimationDuration, FPS));
 				}
 			}
 
