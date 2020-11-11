@@ -1,10 +1,17 @@
+/*
+ * Header File: DirectXHelpers.h
+ * Last Update: 2020/11/11
+ *
+ * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
+ */
+
 #pragma once
 
 #include <Windows.h>
 #include <wrl.h>
 #include <d2d1_1.h>
 #include <dwrite.h>
-#include "SystemErrorHelpers.h"
+#include "../SystemErrorHelpers/SystemErrorHelpers.h"
 
 namespace Hydr10n {
 	namespace DirectXHelpers {
@@ -36,6 +43,19 @@ namespace Hydr10n {
 				ComPtr<ID2D1GradientStopCollection> d2dGradientStopCollection;
 				ThrowIfFailed(pD2dRenderTarget->CreateGradientStopCollection(pD2dGradientStops, gradientStopsCount, &d2dGradientStopCollection));
 				ThrowIfFailed(pD2dRenderTarget->CreateLinearGradientBrush(pD2dLinearGradientBrushProperties, d2dGradientStopCollection.Get(), ppD2dLinearGradientBrush));
+			}
+			catch (const std::system_error& e) { return (HRESULT)e.code().value(); }
+			catch (...) { return E_FAIL; }
+			return S_OK;
+		}
+
+		inline HRESULT WINAPI D2D1CreateRadialGradientBrush(ID2D1RenderTarget* pD2dRenderTarget, const D2D1_GRADIENT_STOP* pD2dGradientStops, UINT32 gradientStopsCount, const D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES& pD2dRadialGradientBrushProperties, ID2D1RadialGradientBrush** ppD2dRadialGradientBrush) {
+			using SystemErrorHelpers::ThrowIfFailed;
+			using Microsoft::WRL::ComPtr;
+			try {
+				ComPtr<ID2D1GradientStopCollection> d2dGradientStopCollection;
+				ThrowIfFailed(pD2dRenderTarget->CreateGradientStopCollection(pD2dGradientStops, gradientStopsCount, &d2dGradientStopCollection));
+				ThrowIfFailed(pD2dRenderTarget->CreateRadialGradientBrush(pD2dRadialGradientBrushProperties, d2dGradientStopCollection.Get(), ppD2dRadialGradientBrush));
 			}
 			catch (const std::system_error& e) { return (HRESULT)e.code().value(); }
 			catch (...) { return E_FAIL; }

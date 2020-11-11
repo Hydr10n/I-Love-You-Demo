@@ -1,15 +1,23 @@
+/*
+ * Header File: ILoveYouDemo.h
+ * Last Update: 2020/11/11
+ *
+ * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
+ */
+
 #pragma once
 
 #include "pch.h"
+#include "set_helper.h"
 #include "StepTimer.h"
 #include <d2d1effects.h>
 #include <set>
 
-#define CalculateTransitionSpeed(iValue, iMilliseconds, iFPS) ((int)(iValue) / ((int)(iMilliseconds) / 1000.f * (int)(iFPS)))
+constexpr float CalculateTransitionSpeed(float value, float millionSeconds, float FPS) { return value / (millionSeconds / 1000 * FPS); }
 
 namespace Hydr10n {
 	namespace Demos {
-		class ILoveYouDemo final {
+		class ILoveYou final {
 		public:
 			class AnimationSet final {
 			public:
@@ -17,11 +25,11 @@ namespace Hydr10n {
 
 				AnimationSet(const std::initializer_list<AnimationType>& animationTypes) : m_AnimationTypes(animationTypes) {}
 
-				void Add(AnimationType animationType) { m_AnimationTypes.insert(animationType); }
+				bool Add(AnimationType animationType) { return std_container_helpers::set_helper::modify(m_AnimationTypes, animationType, false); }
 
-				void Remove(AnimationType animationType) { m_AnimationTypes.erase(animationType); }
+				bool Remove(AnimationType animationType) { return std_container_helpers::set_helper::modify(m_AnimationTypes, animationType, true); }
 
-				bool Contains(AnimationType animationType) const { return m_AnimationTypes.find(animationType) != m_AnimationTypes.end(); }
+				bool Contains(AnimationType animationType) const { return m_AnimationTypes.find(animationType) != m_AnimationTypes.cend(); }
 
 				bool IsEmpty() const { return m_AnimationTypes.empty(); }
 
@@ -29,7 +37,7 @@ namespace Hydr10n {
 				std::set<AnimationType> m_AnimationTypes;
 			};
 
-			ILoveYouDemo(HWND hWnd, UINT32 pixelWidth = 0, UINT32 pixelHeight = 0) noexcept(false) : m_hWnd(hWnd) {
+			ILoveYou(HWND hWnd, UINT32 pixelWidth = 0, UINT32 pixelHeight = 0) noexcept(false) : m_hWnd(hWnd) {
 				SystemErrorHelpers::ThrowIfFailed(D2D1CreateFactory(D2D1_FACTORY_TYPE::D2D1_FACTORY_TYPE_SINGLE_THREADED, (IUnknown**)&m_D2dFactory));
 				Resize(pixelWidth, pixelHeight);
 				m_StepTimer.SetFixedTimeStep(true);
@@ -180,7 +188,7 @@ namespace Hydr10n {
 				using namespace D2D1;
 				using DirectXHelpers::D2D1DrawTextNormal;
 				using SystemErrorHelpers::ThrowIfFailed;
-				static constexpr FLOAT HeartScale = 0.8f;
+				constexpr FLOAT HeartScale = 0.8f;
 				Microsoft::WRL::ComPtr<ID2D1Image> d2dImageOldTarget;
 				m_D2dDeviceContext->GetTarget(&d2dImageOldTarget);
 				m_D2dDeviceContext->SetTarget(m_D2dBitmap1Background.Get());
@@ -254,20 +262,20 @@ namespace Hydr10n {
 				};
 				const D2D1_SIZE_F size = pD2dRenderTarget->GetSize();
 				ComPtr<ID2D1Factory> d2dFactory;
-				ComPtr<ID2D1LinearGradientBrush> d2dLinearGradientBrush;
 				ComPtr<ID2D1PathGeometry> d2dPathGeometry;
 				ComPtr<ID2D1GeometrySink> d2dGeometrySink;
+				ComPtr<ID2D1LinearGradientBrush> d2dLinearGradientBrush;
 				pD2dRenderTarget->GetFactory(&d2dFactory);
-				ThrowIfFailed(DirectXHelpers::D2D1CreateLinearGradientBrush(pD2dRenderTarget, d2dGradientStops, ARRAYSIZE(d2dGradientStops), LinearGradientBrushProperties(Point2F(size.width / 2), Point2F(size.width / 2, size.height)), &d2dLinearGradientBrush));
 				ThrowIfFailed(d2dFactory->CreatePathGeometry(&d2dPathGeometry));
 				ThrowIfFailed(d2dPathGeometry->Open(&d2dGeometrySink));
+				ThrowIfFailed(DirectXHelpers::D2D1CreateLinearGradientBrush(pD2dRenderTarget, d2dGradientStops, ARRAYSIZE(d2dGradientStops), LinearGradientBrushProperties(Point2F(size.width / 2), Point2F(size.width / 2, size.height)), &d2dLinearGradientBrush));
 				/*
 				 * Math Functions:
 				 * f(x) = sqrt(1 - (|x| - 1) ^ 2)
 				 * g(x) = arccos(1 - |x|) - Pi
 				 * x: [-2, 2]
 				 */
-				static const FLOAT Pi = 3.14159265f, Radius = 1, Width = Radius * 4, Height = Radius + Pi, Ratio = Width / Height;
+				constexpr FLOAT Pi = 3.14159265f, Radius = 1, Width = Radius * 4, Height = Radius + Pi, Ratio = Width / Height;
 				scale *= ((size.width / size.height < Ratio ? size.width : size.height * Ratio) / Width);
 				const FLOAT diameter = floorf(Radius * scale * 2);
 				const D2D1_POINT_2F origin = Point2F(size.width / 2, size.height / 2 - scale * (Height / 2 - Radius)),

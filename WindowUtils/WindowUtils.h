@@ -1,7 +1,14 @@
+/*
+ * Header File: WindowUtils.h
+ * Last Update: 2020/11/11
+ *
+ * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
+ */
+
 #pragma once
 
 #include <Windows.h>
-#include "DisplayUtils.h"
+#include "../DisplayUtils/DisplayUtils.h"
 
 namespace Hydr10n {
 	namespace WindowUtils {

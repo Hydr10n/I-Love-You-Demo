@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Windows.h>
-#include "SystemErrorHelpers.h"
+#include "../SystemErrorHelpers/SystemErrorHelpers.h"
 
 namespace DX {
 	// Helper class for animation and simulation timing.

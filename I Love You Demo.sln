@@ -5,7 +5,45 @@ VisualStudioVersion = 16.0.29728.190
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "I Love You Demo", "I Love You Demo\I Love You Demo.vcxproj", "{609512C6-CC3F-4376-BB5B-CB8F1E89A613}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "std_container_helpers", "std_container_helpers\std_container_helpers.vcxitems", "{192E25ED-926C-4C70-9D6A-700CF60712E6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FileUtils", "FileUtils\FileUtils.vcxitems", "{A43799B6-4AA9-41E3-8B93-4903B803CFAE}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DataUtils", "DataUtils\DataUtils.vcxitems", "{7C435654-519A-449E-8718-B600061BC0D5}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Windows", "Windows\Windows.vcxitems", "{A5D3DEB5-8D1A-4E75-B912-7D01A110AC7F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DisplayUtils", "DisplayUtils\DisplayUtils.vcxitems", "{405B631F-5F64-4FB4-AAA9-5B2EC0FBE6DA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SystemErrorHelpers", "SystemErrorHelpers\SystemErrorHelpers.vcxitems", "{B5BB5C2C-7694-4F7A-B991-8B10AF017E72}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXHelpers", "DirectXHelpers\DirectXHelpers.vcxitems", "{534433CE-15A6-4F9E-9BA4-9C515587AE42}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WindowUtils", "WindowUtils\WindowUtils.vcxitems", "{BF555B11-F15C-4AD4-A7C4-CACF29388210}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Timers", "Timers\Timers.vcxitems", "{D961C0CE-93E9-4BAA-86C5-FFFE751EF820}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		std_container_helpers\std_container_helpers.vcxitems*{192e25ed-926c-4c70-9d6a-700cf60712e6}*SharedItemsImports = 9
+		DisplayUtils\DisplayUtils.vcxitems*{405b631f-5f64-4fb4-aaa9-5b2ec0fbe6da}*SharedItemsImports = 9
+		DirectXHelpers\DirectXHelpers.vcxitems*{534433ce-15a6-4f9e-9ba4-9c515587ae42}*SharedItemsImports = 9
+		DataUtils\DataUtils.vcxitems*{609512c6-cc3f-4376-bb5b-cb8f1e89a613}*SharedItemsImports = 4
+		DirectXHelpers\DirectXHelpers.vcxitems*{609512c6-cc3f-4376-bb5b-cb8f1e89a613}*SharedItemsImports = 4
+		DisplayUtils\DisplayUtils.vcxitems*{609512c6-cc3f-4376-bb5b-cb8f1e89a613}*SharedItemsImports = 4
+		FileUtils\FileUtils.vcxitems*{609512c6-cc3f-4376-bb5b-cb8f1e89a613}*SharedItemsImports = 4
+		std_container_helpers\std_container_helpers.vcxitems*{609512c6-cc3f-4376-bb5b-cb8f1e89a613}*SharedItemsImports = 4
+		SystemErrorHelpers\SystemErrorHelpers.vcxitems*{609512c6-cc3f-4376-bb5b-cb8f1e89a613}*SharedItemsImports = 4
+		Timers\Timers.vcxitems*{609512c6-cc3f-4376-bb5b-cb8f1e89a613}*SharedItemsImports = 4
+		Windows\Windows.vcxitems*{609512c6-cc3f-4376-bb5b-cb8f1e89a613}*SharedItemsImports = 4
+		WindowUtils\WindowUtils.vcxitems*{609512c6-cc3f-4376-bb5b-cb8f1e89a613}*SharedItemsImports = 4
+		DataUtils\DataUtils.vcxitems*{7c435654-519a-449e-8718-b600061bc0d5}*SharedItemsImports = 9
+		FileUtils\FileUtils.vcxitems*{a43799b6-4aa9-41e3-8b93-4903b803cfae}*SharedItemsImports = 9
+		Windows\Windows.vcxitems*{a5d3deb5-8d1a-4e75-b912-7d01a110ac7f}*SharedItemsImports = 9
+		SystemErrorHelpers\SystemErrorHelpers.vcxitems*{b5bb5c2c-7694-4f7a-b991-8b10af017e72}*SharedItemsImports = 9
+		WindowUtils\WindowUtils.vcxitems*{bf555b11-f15c-4ad4-a7c4-cacf29388210}*SharedItemsImports = 9
+		Timers\Timers.vcxitems*{d961c0ce-93e9-4baa-86c5-fffe751ef820}*SharedItemsImports = 9
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86

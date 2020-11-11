@@ -2,22 +2,23 @@
 
 #include "AppData.h"
 #include "WindowUtils.h"
+#include "FileUtils.h"
 
 class MyAppSettingsData final {
 public:
 	enum class Key_bool { ShowFramesPerSecond, ShowHelpAtStartup };
 
-	static LPCWSTR GetFilePath() { return m_FilePath.c_str(); }
+	static LPCWSTR GetPath() { return m_Path.c_str(); }
 
 	static bool Save(Key_bool key, bool data) {
 		const auto& sectionKeyPair = ToSectionKeyPair(key);
-		return Hydr10n::DataUtils::AppData<LPCWSTR>::Save(ToString(sectionKeyPair.first), sectionKeyPair.second, GetFilePath(), ToString(data));
+		return Hydr10n::DataUtils::AppData::Save(ToString(sectionKeyPair.first), sectionKeyPair.second, GetPath(), ToString(data));
 	}
 
 	static bool Load(Key_bool key, bool& data) {
 		WCHAR buffer[7];
 		const auto& sectionKeyPair = ToSectionKeyPair(key);
-		bool ret = Hydr10n::DataUtils::AppData<LPCWSTR>::Load(ToString(sectionKeyPair.first), sectionKeyPair.second, GetFilePath(), buffer, ARRAYSIZE(buffer));
+		bool ret = Hydr10n::DataUtils::AppData::Load(ToString(sectionKeyPair.first), sectionKeyPair.second, GetPath(), buffer, ARRAYSIZE(buffer));
 		if (ret) {
 			RemoveSubstringStartingWithSpace(buffer);
 			ret = ToValue(buffer, data);
@@ -27,11 +28,11 @@ public:
 		return ret;
 	}
 
-	static bool Save(Hydr10n::WindowUtils::WindowMode data) { return Hydr10n::DataUtils::AppData<LPCWSTR>::Save(ToString(Section::DisplaySettings), KeyWindowMode, GetFilePath(), ToString(data)); }
+	static bool Save(Hydr10n::WindowUtils::WindowMode data) { return Hydr10n::DataUtils::AppData::Save(ToString(Section::DisplaySettings), KeyWindowMode, GetPath(), ToString(data)); }
 
 	static bool Load(Hydr10n::WindowUtils::WindowMode& data) {
 		WCHAR buffer[12];
-		bool ret = Hydr10n::DataUtils::AppData<LPCWSTR>::Load(ToString(Section::DisplaySettings), KeyWindowMode, GetFilePath(), buffer, ARRAYSIZE(buffer));
+		bool ret = Hydr10n::DataUtils::AppData::Load(ToString(Section::DisplaySettings), KeyWindowMode, GetPath(), buffer, ARRAYSIZE(buffer));
 		if (ret) {
 			RemoveSubstringStartingWithSpace(buffer);
 			ret = ToValue(buffer, data);
@@ -43,14 +44,14 @@ public:
 
 	static bool Save(const Hydr10n::DisplayUtils::DisplayResolution& data) {
 		using Hydr10n::DataUtils::AppData;
-		const LPCWSTR lpcwSection = ToString(Section::DisplaySettings), lpcwFilePath = GetFilePath();
-		return AppData<DWORD>::Save(lpcwSection, KeyResolutionWidth, lpcwFilePath, data.PixelWidth) && AppData<DWORD>::Save(lpcwSection, KeyResolutionHeight, lpcwFilePath, data.PixelHeight);
+		const LPCWSTR lpcwSection = ToString(Section::DisplaySettings), lpcwPath = GetPath();
+		return AppData::Save(lpcwSection, KeyResolutionWidth, lpcwPath, data.PixelWidth) && AppData::Save(lpcwSection, KeyResolutionHeight, lpcwPath, data.PixelHeight);
 	}
 
 	static bool Load(Hydr10n::DisplayUtils::DisplayResolution& data) {
 		using Hydr10n::DataUtils::AppData;
-		const LPCWSTR lpcwSection = ToString(Section::DisplaySettings), lpcwFilePath = GetFilePath();
-		const bool ret = AppData<DWORD>::Load(lpcwSection, KeyResolutionWidth, lpcwFilePath, data.PixelWidth) && AppData<DWORD>::Load(lpcwSection, KeyResolutionHeight, lpcwFilePath, data.PixelHeight);
+		const LPCWSTR lpcwSection = ToString(Section::DisplaySettings), lpcwPath = GetPath();
+		const bool ret = AppData::Load(lpcwSection, KeyResolutionWidth, lpcwPath, data.PixelWidth) && AppData::Load(lpcwSection, KeyResolutionHeight, lpcwPath, data.PixelHeight);
 		if (!ret)
 			data = {};
 		return ret;
@@ -64,9 +65,9 @@ private:
 	static constexpr LPCWSTR KeyWindowMode = L"WindowMode",
 		KeyResolutionWidth = L"ResolutionWidth", KeyResolutionHeight = L"ResolutionHeight";
 
-	static std::wstring m_FilePath;
+	static std::wstring m_Path;
 
-	static bool RemoveSubstringStartingWithSpace(LPWSTR str) {
+	static bool RemoveSubstringStartingWithSpace(wchar_t* str) {
 		const std::wstring wstr(str);
 		const auto iteratorBegin = wstr.cbegin(), iteratorEnd = wstr.cend(), iterator = std::find_if(iteratorBegin, iteratorEnd, [](wchar_t ch) { return iswspace((wint_t)ch); });
 		if (iterator == iteratorEnd)
@@ -106,7 +107,7 @@ private:
 	}
 
 	static LPCWSTR ToString(Hydr10n::WindowUtils::WindowMode val) {
-		const LPCWSTR strs[] = { L"Windowed", L"Borderless", L"FullScreen" };
+		constexpr LPCWSTR strs[] = { L"Windowed", L"Borderless", L"FullScreen" };
 		return strs[(size_t)val];
 	}
 
@@ -127,14 +128,11 @@ private:
 
 	static const struct static_constructor {
 		static_constructor() noexcept(false) {
-			WCHAR szFileName[MAX_PATH];
-			if (GetModuleFileNameW(NULL, szFileName, ARRAYSIZE(szFileName))) {
-				m_FilePath = szFileName;
-				m_FilePath.replace(m_FilePath.find_last_of(L'\\') + 1, m_FilePath.length(), L"Settings.ini");
-			}
+			if (Hydr10n::FileUtils::GetModuleFileNameW(m_Path))
+				m_Path.replace(m_Path.find_last_of(L'\\') + 1, m_Path.size(), L"Settings.ini");
 		}
 	} m_static_constructor;
 };
 
-decltype(MyAppSettingsData::m_FilePath) MyAppSettingsData::m_FilePath;
 decltype(MyAppSettingsData::m_static_constructor) MyAppSettingsData::m_static_constructor;
+decltype(MyAppSettingsData::m_Path) MyAppSettingsData::m_Path;

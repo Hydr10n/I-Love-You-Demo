@@ -11,6 +11,9 @@
 
 class MainWindow final : public Hydr10n::Windows::BaseWindow {
 public:
+	MainWindow(const MainWindow&) = delete;
+	MainWindow& operator=(const MainWindow&) = delete;
+
 	MainWindow() noexcept(false) : BaseWindow(L"Direct2D") {
 		using namespace Hydr10n::WindowUtils;
 		using Hydr10n::SystemErrorHelpers::ThrowIfFailed;
@@ -29,7 +32,7 @@ public:
 			displayResolution = { (DWORD)Scale(DefaultDeviceIndependentClientSize.cx, dpiX), (DWORD)Scale(DefaultDeviceIndependentClientSize.cy, dpiY) };
 		}
 		HWND hWnd = GetWindowHandle();
-		m_ILoveYouDemo.reset(new Hydr10n::Demos::ILoveYouDemo(hWnd, displayResolution.PixelWidth, displayResolution.PixelHeight));
+		m_ILoveYouDemo.reset(new Hydr10n::Demos::ILoveYou(hWnd, displayResolution.PixelWidth, displayResolution.PixelHeight));
 		bool showFramesPerSecond;
 		if (MyAppSettingsData::Load(MyAppSettingsData::Key_bool::ShowFramesPerSecond, showFramesPerSecond))
 			m_ILoveYouDemo->ShowFramesPerSecond(showFramesPerSecond);
@@ -60,7 +63,7 @@ public:
 	}
 
 private:
-	static const DWORD DefaultWindowedModeStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+	static constexpr DWORD DefaultWindowedModeStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 	static constexpr SIZE DefaultDeviceIndependentClientSize{ 650, 650 };
 	static constexpr Hydr10n::DisplayUtils::DisplayResolution MinDisplayResolution{ 800, 600 };
 
@@ -70,10 +73,10 @@ private:
 	int m_CursorCoordinateX{};
 	RECT m_ClientRect{};
 	std::unique_ptr<Hydr10n::WindowUtils::WindowModeUtil> m_WindowModeHelper;
-	std::unique_ptr<Hydr10n::Demos::ILoveYouDemo> m_ILoveYouDemo;
+	std::unique_ptr<Hydr10n::Demos::ILoveYou> m_ILoveYouDemo;
 
 	LRESULT CALLBACK HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override {
-		using Hydr10n::Demos::ILoveYouDemo;
+		using Hydr10n::Demos::ILoveYou;
 		using Hydr10n::WindowUtils::WindowMode;
 		enum class MenuID {
 			WindowModeWindowed, WindowModeBorderless, WindowModeFullScreen,
@@ -86,7 +89,7 @@ private:
 		};
 		switch (uMsg) {
 		case WM_SIZE: {
-			m_ClientRect = { 0, 0, (int)LOWORD(lParam), (int)HIWORD(lParam) };
+			m_ClientRect = { 0, 0, LOWORD(lParam), HIWORD(lParam) };
 			switch (wParam) {
 			case SIZE_MINIMIZED: m_ILoveYouDemo->Pause(); break;
 			case SIZE_RESTORED: m_ILoveYouDemo->Resume(); break;
@@ -128,8 +131,8 @@ private:
 			const auto& resolution = m_WindowModeHelper->GetResolution();
 			const auto& animationSet = m_ILoveYouDemo->GetAnimationSet();
 			const bool isFramesPerSecondVisible = m_ILoveYouDemo->IsFramesPerSecondVisible(),
-				isPlayingGlowAnimation = animationSet.Contains(ILoveYouDemo::AnimationSet::AnimationType::Glow),
-				isPlayingRotationAnimation = animationSet.Contains(ILoveYouDemo::AnimationSet::AnimationType::Rotation),
+				isPlayingGlowAnimation = animationSet.Contains(ILoveYou::AnimationSet::AnimationType::Glow),
+				isPlayingRotationAnimation = animationSet.Contains(ILoveYou::AnimationSet::AnimationType::Rotation),
 				isRotationClockwise = m_ILoveYouDemo->IsRotationClockwise();
 			const LPCWSTR lpcwPlayAnimation = L"Play Animation", lpcwReset = L"Reset";
 			HMENU hMenu = CreatePopupMenu(), hMenuWindowMode = CreatePopupMenu(), hMenuResolution = CreatePopupMenu(), hMenuGlow = CreatePopupMenu(), hMenuRotation = CreatePopupMenu();
@@ -188,10 +191,10 @@ private:
 				MyAppSettingsData::Save(MyAppSettingsData::Key_bool::ShowFramesPerSecond, isFramesPerSecondVisible);
 			}	break;
 			case MenuID::GlowPlayAnimation:
-			case MenuID::GlowPauseAnimation: m_ILoveYouDemo->ReverseAnimationState(ILoveYouDemo::AnimationSet::AnimationType::Glow); break;
+			case MenuID::GlowPauseAnimation: m_ILoveYouDemo->ReverseAnimationState(ILoveYou::AnimationSet::AnimationType::Glow); break;
 			case MenuID::GlowReset: m_ILoveYouDemo->SetForegroundGlowRadiusScale(); break;
 			case MenuID::RotationPlayAnimation:
-			case MenuID::RotationPauseAnimation: m_ILoveYouDemo->ReverseAnimationState(ILoveYouDemo::AnimationSet::AnimationType::Rotation); break;
+			case MenuID::RotationPauseAnimation: m_ILoveYouDemo->ReverseAnimationState(ILoveYou::AnimationSet::AnimationType::Rotation); break;
 			case MenuID::RotationReset: m_ILoveYouDemo->SetForegroundRotationY(); break;
 			case MenuID::RotationClockwise:
 			case MenuID::RotationCounterclockwise: m_ILoveYouDemo->ReverseRotation(); break;

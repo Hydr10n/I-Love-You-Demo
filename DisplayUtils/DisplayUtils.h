@@ -1,3 +1,10 @@
+/*
+ * Header File: DisplayUtils.h
+ * Last Update: 2020/10/14
+ *
+ * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
+ */
+
 #pragma once
 
 #include <Windows.h>

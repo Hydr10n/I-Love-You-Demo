@@ -1,3 +1,10 @@
+/*
+ * Header File: BaseWindow.h
+ * Last Update: 2020/11/01
+ *
+ * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
+ */
+
 #pragma once
 
 #include <Windows.h>
@@ -7,8 +14,11 @@ namespace Hydr10n {
 	namespace Windows {
 		class BaseWindow {
 		public:
+			BaseWindow(const BaseWindow&) = delete;
+			BaseWindow& operator=(const BaseWindow&) = delete;
+
 			virtual ~BaseWindow() {
-				if (m_hWnd) {
+				if (m_hWnd != NULL) {
 					SetWindowLongPtrW(m_hWnd, GWLP_USERDATA, 0);
 					DestroyWindow(m_hWnd);
 					UnregisterClassW(m_WndClassEx.lpszClassName, m_WndClassEx.hInstance);
@@ -50,12 +60,12 @@ namespace Hydr10n {
 			const WNDCLASSEXW& GetWndClassEx() const { return m_WndClassEx; }
 
 			BOOL Initialize(DWORD dwExStyle, LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu) {
-				if (m_hWnd) {
+				if (m_hWnd != NULL) {
 					SetLastError(ERROR_ALREADY_INITIALIZED);
 					return FALSE;
 				}
 				RegisterClassExW(&m_WndClassEx);
-				if (m_hWnd = CreateWindowExW(dwExStyle, m_WndClassEx.lpszClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, m_WndClassEx.hInstance, this)) {
+				if ((m_hWnd = CreateWindowExW(dwExStyle, m_WndClassEx.lpszClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, m_WndClassEx.hInstance, this)) != NULL) {
 					SetWindowLongPtrW(m_hWnd, GWLP_USERDATA, (LONG_PTR)this);
 					return TRUE;
 				}

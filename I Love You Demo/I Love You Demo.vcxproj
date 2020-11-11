@@ -56,6 +56,15 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="Shared">
+    <Import Project="..\std_container_helpers\std_container_helpers.vcxitems" Label="Shared" />
+    <Import Project="..\FileUtils\FileUtils.vcxitems" Label="Shared" />
+    <Import Project="..\DataUtils\DataUtils.vcxitems" Label="Shared" />
+    <Import Project="..\Windows\Windows.vcxitems" Label="Shared" />
+    <Import Project="..\DisplayUtils\DisplayUtils.vcxitems" Label="Shared" />
+    <Import Project="..\SystemErrorHelpers\SystemErrorHelpers.vcxitems" Label="Shared" />
+    <Import Project="..\DirectXHelpers\DirectXHelpers.vcxitems" Label="Shared" />
+    <Import Project="..\WindowUtils\WindowUtils.vcxitems" Label="Shared" />
+    <Import Project="..\Timers\Timers.vcxitems" Label="Shared" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -93,6 +102,9 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -105,6 +117,9 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -121,6 +136,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -137,29 +155,22 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AppData.h" />
-    <ClInclude Include="BaseWindow.h" />
-    <ClInclude Include="DirectXHelpers.h" />
-    <ClInclude Include="WindowUtils.h" />
-    <ClInclude Include="DisplayUtils.h" />
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="MyAppSettingsData.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ILoveYouDemo.h" />
-    <ClInclude Include="StepTimer.h" />
-    <ClInclude Include="SystemErrorHelpers.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="I Love You Demo.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Manifest Include="DeclareDPIAware.manifest" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
