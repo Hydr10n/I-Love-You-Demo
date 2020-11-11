@@ -278,7 +278,7 @@ namespace Hydr10n {
 				 * x: [-2, 2]
 				 */
 				constexpr FLOAT Pi = 3.14159265f, Radius = 1, Width = Radius * 4, Height = Radius + Pi, Ratio = Width / Height;
-				scale *= ((size.width / size.height < Ratio ? size.width : size.height * Ratio) / Width);
+				scale *= (size.width / size.height < Ratio ? size.width : size.height * Ratio) / Width;
 				const FLOAT diameter = floorf(Radius * scale * 2);
 				const D2D1_POINT_2F origin = Point2F(size.width / 2, size.height / 2 - scale * (Height / 2 - Radius)),
 					startPoint = Point2F(origin.x - diameter, origin.y + (-acosf(1 - 1 / scale * diameter) + Pi) * scale);
