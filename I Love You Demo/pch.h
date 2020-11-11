@@ -2,13 +2,6 @@
 
 #include <Windows.h>
 #include <windowsx.h>
-#include <string>
-#include "SystemErrorHelpers.h"
-#include "DirectXHelpers.h"
-
-#pragma comment(lib, "d2d1")
-#pragma comment(lib, "dxguid")
-#pragma comment(lib, "dwrite")
 
 #pragma comment(linker, "/SUBSYSTEM:WINDOWS")
 

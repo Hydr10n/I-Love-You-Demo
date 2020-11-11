@@ -7,11 +7,13 @@
 
 #pragma once
 
-#include "pch.h"
-#include "set_helper.h"
+#include "DirectXHelpers.h"
 #include "StepTimer.h"
+#include "set_helper.h"
+#include <string>
 #include <d2d1effects.h>
-#include <set>
+
+#pragma comment(lib, "dxguid")
 
 constexpr float CalculateTransitionSpeed(float value, float millionSeconds, float FPS) { return value / (millionSeconds / 1000 * FPS); }
 

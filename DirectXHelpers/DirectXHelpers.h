@@ -13,6 +13,9 @@
 #include <dwrite.h>
 #include "../SystemErrorHelpers/SystemErrorHelpers.h"
 
+#pragma comment(lib, "d2d1")
+#pragma comment(lib, "dwrite")
+
 namespace Hydr10n {
 	namespace DirectXHelpers {
 		inline HRESULT WINAPI D2D1GetDeviceContext(ID2D1RenderTarget* pD2dRenderTarget, ID2D1DeviceContext** ppD2dDeviceContext) { return pD2dRenderTarget->QueryInterface(ppD2dDeviceContext); }
