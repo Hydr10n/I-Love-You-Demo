@@ -119,7 +119,9 @@ private:
 		case WM_MOUSEMOVE: {
 			if (wParam & MK_LBUTTON) {
 				const int x = GET_X_LPARAM(lParam);
-				m_ILoveYouDemo->SetForegroundRotationY(m_ILoveYouDemo->GetForegroundRotationY() + (x - m_CursorCoordinateX) * (0.4f * m_WindowModeHelper->GetResolution().PixelWidth / (m_ClientRect.right - m_ClientRect.left)));
+				auto foregroundRotation = m_ILoveYouDemo->GetForegroundRotation();
+				foregroundRotation.y += (x - m_CursorCoordinateX) * (0.4f * m_WindowModeHelper->GetResolution().PixelWidth / (m_ClientRect.right - m_ClientRect.left));
+				m_ILoveYouDemo->SetForegroundRotation(foregroundRotation);
 				m_CursorCoordinateX = x;
 			}
 		}	break;
@@ -195,7 +197,7 @@ private:
 			case MenuID::GlowReset: m_ILoveYouDemo->SetForegroundGlowRadiusScale(); break;
 			case MenuID::RotationPlayAnimation:
 			case MenuID::RotationPauseAnimation: m_ILoveYouDemo->ReverseAnimationState(ILoveYou::AnimationSet::AnimationType::Rotation); break;
-			case MenuID::RotationReset: m_ILoveYouDemo->SetForegroundRotationY(); break;
+			case MenuID::RotationReset: m_ILoveYouDemo->SetForegroundRotation(); break;
 			case MenuID::RotationClockwise:
 			case MenuID::RotationCounterclockwise: m_ILoveYouDemo->ReverseRotation(); break;
 			case MenuID::ViewSourceCodeOnGitHub: ShellExecuteW(NULL, L"open", L"https://github.com/Hydr10n/I-Love-You-Demo", NULL, NULL, SW_SHOW); break;

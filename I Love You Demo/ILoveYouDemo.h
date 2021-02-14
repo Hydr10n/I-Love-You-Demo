@@ -1,6 +1,6 @@
 /*
  * Header File: ILoveYouDemo.h
- * Last Update: 2020/11/11
+ * Last Update: 2021/02/14
  *
  * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
  */
@@ -15,7 +15,7 @@
 
 #pragma comment(lib, "dxguid")
 
-constexpr float CalculateTransitionSpeed(float value, float millionSeconds, float FPS) { return value / (millionSeconds / 1000 * FPS); }
+constexpr float CalculateAverageVelocity(float value, float millionSeconds, float FPS) { return value / (millionSeconds / 1000 * FPS); }
 
 namespace Hydr10n {
 	namespace Demos {
@@ -117,18 +117,18 @@ namespace Hydr10n {
 
 			FLOAT GetForegroundGlowRadiusScale() const noexcept { return m_ForegroundGlowRadiusScale; }
 
-			void SetForegroundRotationY(FLOAT y = 0) {
+			void SetForegroundRotation(const D2D1_VECTOR_3F& rotation = {}) {
 				using namespace SystemErrorHelpers;
 				if (!m_D2dEffect3DPerspectiveTransform)
 					throw_system_error((int)D2DERR_NOT_INITIALIZED);
-				y -= int(y / 360) * 360;
-				ThrowIfFailed(m_D2dEffect3DPerspectiveTransform->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP::D2D1_3DPERSPECTIVETRANSFORM_PROP_ROTATION, D2D1::Vector3F(0, y)));
-				m_ForegroundRotationY = y;
+				const D2D1_VECTOR_3F correctedRotation = D2D1::Vector3F(rotation.x - int(rotation.x / 360) * 360, rotation.y - int(rotation.y / 360) * 360, rotation.z - int(rotation.z / 360) * 360);
+				ThrowIfFailed(m_D2dEffect3DPerspectiveTransform->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP::D2D1_3DPERSPECTIVETRANSFORM_PROP_ROTATION, correctedRotation));
+				m_ForegroundRotation = correctedRotation;
 				if (m_IsInitialized && !IsRunning())
 					Render();
 			}
 
-			FLOAT GetForegroundRotationY() const noexcept { return m_ForegroundRotationY; }
+			const D2D1_VECTOR_3F& GetForegroundRotation() const noexcept { return m_ForegroundRotation; }
 
 			void ReverseRotation() noexcept { m_IsRotationClockwise = !m_IsRotationClockwise; }
 
@@ -140,9 +140,10 @@ namespace Hydr10n {
 				GlowAnimationDuration = 1250, RotationAnimationDuration = GlowAnimationDuration * 2;
 
 			bool m_IsInitialized{}, m_IsRunning{ true }, m_IsFramesPerSecondVisible{ true }, m_IsGlowFadeIn{ true }, m_IsRotationClockwise{ true };
-			FLOAT m_Scale, m_MaxForegroundGlowRadius, m_ForegroundGlowRadiusScale{}, m_ForegroundRotationY{};
+			FLOAT m_Scale, m_MaxForegroundGlowRadius, m_ForegroundGlowRadiusScale{};
 			HWND m_hWnd;
 			D2D1_SIZE_F m_D2dSize;
+			D2D1_VECTOR_3F m_ForegroundRotation{};
 			AnimationSet m_AnimationSet{ AnimationSet::AnimationType::Glow, AnimationSet::AnimationType::Rotation };
 			DX::StepTimer m_StepTimer;
 			Microsoft::WRL::ComPtr<ID2D1Factory> m_D2dFactory;
@@ -207,7 +208,7 @@ namespace Hydr10n {
 				m_D2dDeviceContext->SetTarget(d2dImageOldTarget.Get());
 				m_MaxForegroundGlowRadius = m_Scale * HeartScale * 50;
 				SetForegroundGlowRadiusScale(m_ForegroundGlowRadiusScale);
-				SetForegroundRotationY(m_ForegroundRotationY);
+				SetForegroundRotation(m_ForegroundRotation);
 			}
 
 			void DrawFramesPerSecond() {
@@ -219,14 +220,17 @@ namespace Hydr10n {
 			void Update() {
 				if (m_StepTimer.GetFrameCount() > 1) {
 					if (m_AnimationSet.Contains(AnimationSet::AnimationType::Glow)) {
-						SetForegroundGlowRadiusScale(m_ForegroundGlowRadiusScale + (m_IsGlowFadeIn ? 1 : -1) * CalculateTransitionSpeed(1, GlowAnimationDuration, FPS));
+						SetForegroundGlowRadiusScale(m_ForegroundGlowRadiusScale + (m_IsGlowFadeIn ? 1 : -1) * CalculateAverageVelocity(1, GlowAnimationDuration, FPS));
 						if (m_ForegroundGlowRadiusScale >= 1)
 							m_IsGlowFadeIn = false;
 						else if (m_ForegroundGlowRadiusScale <= 0)
 							m_IsGlowFadeIn = true;
 					}
-					if (m_AnimationSet.Contains(AnimationSet::AnimationType::Rotation))
-						SetForegroundRotationY(m_ForegroundRotationY + (m_IsRotationClockwise ? -1 : 1) * CalculateTransitionSpeed(360, RotationAnimationDuration, FPS));
+					if (m_AnimationSet.Contains(AnimationSet::AnimationType::Rotation)) {
+						D2D1_VECTOR_3F foregroundRotation = m_ForegroundRotation;
+						foregroundRotation.y += (m_IsRotationClockwise ? -1 : 1) * CalculateAverageVelocity(360, RotationAnimationDuration, FPS);
+						SetForegroundRotation(foregroundRotation);
+					}
 				}
 			}
 
