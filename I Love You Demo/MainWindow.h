@@ -1,86 +1,83 @@
 #pragma once
 
-#pragma warning(disable:4996)
-
 #include "BaseWindow.h"
 #include "ILoveYouDemo.h"
+#include "DisplayHelpers.h"
 #include "MyAppSettingsData.h"
 #include <memory>
 
-#define Scale(iPixels, iDPI) MulDiv((int)(iPixels), (int)(iDPI), USER_DEFAULT_SCREEN_DPI)
+#define Scale(PixelCount, DPI) MulDiv(static_cast<int>(PixelCount), static_cast<int>(DPI), USER_DEFAULT_SCREEN_DPI)
 
-class MainWindow final : public Hydr10n::Windows::BaseWindow {
+class MainWindow : public Hydr10n::Windows::BaseWindow {
 public:
 	MainWindow(const MainWindow&) = delete;
 	MainWindow& operator=(const MainWindow&) = delete;
 
 	MainWindow() noexcept(false) : BaseWindow(L"Direct2D") {
-		using namespace Hydr10n::WindowUtils;
-		using Hydr10n::SystemErrorHelpers::ThrowIfFailed;
-		ThrowIfFailed(Initialize(0, L"I Love You Demo", 0, 0, 0, 0, 0, NULL, NULL));
-		Microsoft::WRL::ComPtr<ID2D1Factory> d2dFactory;
-		ThrowIfFailed(D2D1CreateFactory(D2D1_FACTORY_TYPE::D2D1_FACTORY_TYPE_SINGLE_THREADED, (IUnknown**)&d2dFactory));
-		Hydr10n::DisplayUtils::DisplayResolution displayResolution;
-		if (MyAppSettingsData::Load(displayResolution)) {
-			const auto& maxDisplayResolution = m_SystemDisplayResolutionSet.GetMaxDisplayResolution();
-			if (displayResolution > maxDisplayResolution)
-				displayResolution = maxDisplayResolution;
+		using ErrorHelpers::ThrowIfFailed;
+		ThrowIfFailed(Initialize(0, L"I Love You Demo", DefaultWindowedModeStyle, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr));
+		SIZE resolution;
+		if (MyAppSettingsData::Load(resolution)) {
+			const auto& maxDisplayResolution = *max_element(m_DisplayResolutions.cbegin(), m_DisplayResolutions.cend());
+			if (resolution > maxDisplayResolution)
+				resolution = maxDisplayResolution;
 		}
 		else {
+			Microsoft::WRL::ComPtr<ID2D1Factory> d2dFactory;
+			ThrowIfFailed(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, d2dFactory.GetAddressOf()));
 			FLOAT dpiX, dpiY;
+#pragma warning(suppress: 4996)
 			d2dFactory->GetDesktopDpi(&dpiX, &dpiY);
-			displayResolution = { (DWORD)Scale(DefaultDeviceIndependentClientSize.cx, dpiX), (DWORD)Scale(DefaultDeviceIndependentClientSize.cy, dpiY) };
+			resolution = { Scale(DefaultDeviceIndependentClientSize.cx, dpiX), Scale(DefaultDeviceIndependentClientSize.cy, dpiY) };
 		}
-		HWND hWnd = GetWindowHandle();
-		m_ILoveYouDemo.reset(new Hydr10n::Demos::ILoveYou(hWnd, displayResolution.PixelWidth, displayResolution.PixelHeight));
-		bool showFramesPerSecond;
-		if (MyAppSettingsData::Load(MyAppSettingsData::Key_bool::ShowFramesPerSecond, showFramesPerSecond))
-			m_ILoveYouDemo->ShowFramesPerSecond(showFramesPerSecond);
-		WindowMode windowMode;
+		const HWND hWnd = GetWindow();
+		Hydr10n::WindowHelpers::WindowMode windowMode;
 		MyAppSettingsData::Load(windowMode);
-		m_WindowModeHelper.reset(new WindowModeUtil(hWnd, windowMode, 0, DefaultWindowedModeStyle));
-		m_WindowModeHelper->SetResolution(displayResolution, false);
-		ThrowIfFailed(m_WindowModeHelper->SetMode(windowMode));
-		m_HasTitleBar = windowMode == WindowMode::Windowed;
+		m_WindowModeHelper = std::make_unique<decltype(m_WindowModeHelper)::element_type>(hWnd, resolution, windowMode, 0, DefaultWindowedModeStyle, FALSE);
+		m_ILoveYouDemo = std::make_unique<decltype(m_ILoveYouDemo)::element_type>(hWnd, static_cast<UINT>(resolution.cx), static_cast<UINT>(resolution.cy), TargetFPS, false);
+		bool showFPS;
+		MyAppSettingsData::Load(MyAppSettingsData::Key_bool::ShowFPS, showFPS);
+		m_ILoveYouDemo->ShowFPS(showFPS);
+		ShowWindow(hWnd, SW_SHOW);
+		m_WindowModeHelper->SetMode(windowMode);
+		m_ILoveYouDemo->Tick();
 		bool showHelpAtStatup;
 		if (!MyAppSettingsData::Load(MyAppSettingsData::Key_bool::ShowHelpAtStartup, showHelpAtStatup) || showHelpAtStatup) {
 			MessageBoxW(hWnd, L"Window mode, resolution, FPS visibility and animations can be controlled in the context menu; glow & rotation of the heart image can be controlled with mouse. Pressing [Alt + Enter] toggles between windowed/borderless and full-screen mode.", L"Help", MB_OK);
-			MyAppSettingsData::Save(MyAppSettingsData::Key_bool::ShowHelpAtStartup, false);
+			if (!showHelpAtStatup)
+				MyAppSettingsData::Save(MyAppSettingsData::Key_bool::ShowHelpAtStartup, false);
 		}
 	}
 
 	DWORD Run() {
 		MSG msg;
 		do
-			if (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
+			if (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE)) {
 				TranslateMessage(&msg);
 				DispatchMessageW(&msg);
 			}
 			else
 				m_ILoveYouDemo->Tick();
 		while (msg.message != WM_QUIT);
-		return (DWORD)msg.wParam;
+		return static_cast<DWORD>(msg.wParam);
 	}
 
 private:
+	static constexpr double TargetFPS = 60;
 	static constexpr DWORD DefaultWindowedModeStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 	static constexpr SIZE DefaultDeviceIndependentClientSize{ 650, 650 };
-	static constexpr Hydr10n::DisplayUtils::DisplayResolution MinDisplayResolution{ 800, 600 };
 
-	const Hydr10n::DisplayUtils::SystemDisplayResolutionSet m_SystemDisplayResolutionSet;
+	const std::vector<Hydr10n::DisplayHelpers::Resolution> m_DisplayResolutions = Hydr10n::DisplayHelpers::GetDisplayResolutions();
 
-	bool m_HasTitleBar;
-	int m_CursorCoordinateX{};
-	RECT m_ClientRect{};
-	std::unique_ptr<Hydr10n::WindowUtils::WindowModeUtil> m_WindowModeHelper;
 	std::unique_ptr<Hydr10n::Demos::ILoveYou> m_ILoveYouDemo;
+	std::unique_ptr<Hydr10n::WindowHelpers::WindowModeHelper> m_WindowModeHelper;
 
 	LRESULT CALLBACK HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override {
 		using Hydr10n::Demos::ILoveYou;
-		using Hydr10n::WindowUtils::WindowMode;
+		using Hydr10n::WindowHelpers::WindowMode;
 		enum class MenuID {
 			WindowModeWindowed, WindowModeBorderless, WindowModeFullScreen,
-			ShowFramesPerSecond, HideFramesPerSecond,
+			ShowFPS, HideFPS,
 			GlowPlayAnimation, GlowPauseAnimation, GlowReset,
 			RotationPlayAnimation, RotationPauseAnimation, RotationReset, RotationClockwise, RotationCounterclockwise,
 			ViewSourceCodeOnGitHub,
@@ -88,129 +85,110 @@ private:
 			FirstResolution
 		};
 		switch (uMsg) {
-		case WM_SIZE: {
-			m_ClientRect = { 0, 0, LOWORD(lParam), HIWORD(lParam) };
-			switch (wParam) {
-			case SIZE_MINIMIZED: m_ILoveYouDemo->Pause(); break;
-			case SIZE_RESTORED: m_ILoveYouDemo->Resume(); break;
-			}
-		}	break;
-		case WM_PAINT: {
-			PAINTSTRUCT ps;
-			BeginPaint(hWnd, &ps);
-			m_ILoveYouDemo->Tick(false);
-			EndPaint(hWnd, &ps);
-		}	break;
-		case WM_SYSKEYDOWN: {
-			if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000) {
-				const auto mode = m_WindowModeHelper->GetMode() == WindowMode::FullScreen ? (m_HasTitleBar ? WindowMode::Windowed : WindowMode::Borderless) : WindowMode::FullScreen;
-				if (m_WindowModeHelper->SetMode(mode))
-					MyAppSettingsData::Save(mode);
-			}
-		}	break;
-		case WM_MENUCHAR: return MAKELRESULT(0, MNC_CLOSE);
-		case WM_LBUTTONDOWN: {
-			m_CursorCoordinateX = GET_X_LPARAM(lParam);
-			SetCapture(hWnd);
-			RECT rc = m_ClientRect;
-			MapWindowRect(hWnd, HWND_DESKTOP, &rc);
-			ClipCursor(&rc);
-		}	break;
-		case WM_MOUSEMOVE: {
-			if (wParam & MK_LBUTTON) {
-				const int x = GET_X_LPARAM(lParam);
-				auto foregroundRotation = m_ILoveYouDemo->GetForegroundRotation();
-				foregroundRotation.y += (x - m_CursorCoordinateX) * (0.4f * m_WindowModeHelper->GetResolution().PixelWidth / (m_ClientRect.right - m_ClientRect.left));
-				m_ILoveYouDemo->SetForegroundRotation(foregroundRotation);
-				m_CursorCoordinateX = x;
-			}
-		}	break;
-		case WM_LBUTTONUP: ReleaseCapture(); break;
-		case WM_CAPTURECHANGED: ClipCursor(NULL); break;
-		case WM_MOUSEWHEEL: m_ILoveYouDemo->SetForegroundGlowRadiusScale(m_ILoveYouDemo->GetForegroundGlowRadiusScale() + 0.1f * GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA); break;
 		case WM_CONTEXTMENU: {
 			const auto mode = m_WindowModeHelper->GetMode();
-			const auto& resolution = m_WindowModeHelper->GetResolution();
-			const auto& animationSet = m_ILoveYouDemo->GetAnimationSet();
-			const bool isFramesPerSecondVisible = m_ILoveYouDemo->IsFramesPerSecondVisible(),
-				isPlayingGlowAnimation = animationSet.Contains(ILoveYou::AnimationSet::AnimationType::Glow),
-				isPlayingRotationAnimation = animationSet.Contains(ILoveYou::AnimationSet::AnimationType::Rotation),
+			const auto& clientSize = m_WindowModeHelper->GetClientSize();
+			const auto& animations = m_ILoveYouDemo->GetAnimations();
+			const bool isFPSVisible = m_ILoveYouDemo->IsFPSVisible(),
+				isPlayingGlowAnimation = animations.contains(ILoveYou::Animation::Glow),
+				isPlayingRotationAnimation = animations.contains(ILoveYou::Animation::Rotation),
 				isRotationClockwise = m_ILoveYouDemo->IsRotationClockwise();
-			const LPCWSTR lpcwPlayAnimation = L"Play Animation", lpcwReset = L"Reset";
-			HMENU hMenu = CreatePopupMenu(), hMenuWindowMode = CreatePopupMenu(), hMenuResolution = CreatePopupMenu(), hMenuGlow = CreatePopupMenu(), hMenuRotation = CreatePopupMenu();
-			AppendMenuW(hMenu, MF_POPUP, (UINT_PTR)hMenuWindowMode, L"Window Mode");
-			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::Windowed ? MF_CHECKED : MF_UNCHECKED), (UINT_PTR)MenuID::WindowModeWindowed, L"Windowed");
-			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::Borderless ? MF_CHECKED : MF_UNCHECKED), (UINT_PTR)MenuID::WindowModeBorderless, L"Borderless");
-			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::FullScreen ? MF_CHECKED : MF_UNCHECKED), (UINT_PTR)MenuID::WindowModeFullScreen, L"Full-Screen");
-			AppendMenuW(hMenu, MF_POPUP, (UINT_PTR)hMenuResolution, L"Resolution");
-			for (size_t i = 0; i != m_SystemDisplayResolutionSet.Count(); i++) {
-				const auto& systemDisplayResolution = m_SystemDisplayResolutionSet[i];
-				if (systemDisplayResolution >= MinDisplayResolution)
-					AppendMenuW(hMenuResolution, MF_STRING | (resolution == systemDisplayResolution ? MF_CHECKED : MF_UNCHECKED), UINT_PTR((size_t)MenuID::FirstResolution + i), (std::to_wstring(systemDisplayResolution.PixelWidth) + L" × " + std::to_wstring(systemDisplayResolution.PixelHeight)).c_str());
-			}
-			AppendMenuW(hMenu, MF_STRING | (isFramesPerSecondVisible ? MF_CHECKED : MF_UNCHECKED), UINT_PTR(isFramesPerSecondVisible ? MenuID::HideFramesPerSecond : MenuID::ShowFramesPerSecond), L"Show FPS");
-			AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
-			AppendMenuW(hMenu, MF_POPUP, (UINT_PTR)hMenuGlow, L"Glow");
-			AppendMenuW(hMenuGlow, MF_STRING | (isPlayingGlowAnimation ? MF_CHECKED : MF_UNCHECKED), UINT_PTR(isPlayingGlowAnimation ? MenuID::GlowPauseAnimation : MenuID::GlowPlayAnimation), lpcwPlayAnimation);
-			AppendMenuW(hMenuGlow, MF_STRING, (UINT_PTR)MenuID::GlowReset, lpcwReset);
-			AppendMenuW(hMenu, MF_POPUP, (UINT_PTR)hMenuRotation, L"Rotation");
-			AppendMenuW(hMenuRotation, MF_STRING | (isPlayingRotationAnimation ? MF_CHECKED : MF_UNCHECKED), UINT_PTR(isPlayingRotationAnimation ? MenuID::RotationPauseAnimation : MenuID::RotationPlayAnimation), lpcwPlayAnimation);
-			AppendMenuW(hMenuRotation, MF_STRING, (UINT_PTR)MenuID::RotationReset, lpcwReset);
-			AppendMenuW(hMenuRotation, MF_STRING | (isRotationClockwise ? MF_CHECKED : MF_UNCHECKED), UINT_PTR(isRotationClockwise ? MenuID::RotationCounterclockwise : MenuID::RotationClockwise), L"Clockwise");
-			AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
-			AppendMenuW(hMenu, MF_STRING, (UINT_PTR)MenuID::ViewSourceCodeOnGitHub, L"View Source Code on GitHub");
-			AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
-			AppendMenuW(hMenu, MF_POPUP, (UINT_PTR)MenuID::Exit, L"Exit");
+			const LPCWSTR lpcPlayAnimation = L"Play Animation", lpcReset = L"Reset";
+			const HMENU hMenu = CreatePopupMenu(), hMenuWindowMode = CreatePopupMenu(), hMenuResolution = CreatePopupMenu(), hMenuGlow = CreatePopupMenu(), hMenuRotation = CreatePopupMenu();
+			AppendMenuW(hMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuWindowMode), L"Window Mode");
+			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::Windowed ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(MenuID::WindowModeWindowed), L"Windowed");
+			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::Borderless ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(MenuID::WindowModeBorderless), L"Borderless");
+			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::FullScreen ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(MenuID::WindowModeFullScreen), L"Full-Screen");
+			AppendMenuW(hMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuResolution), L"Resolution");
+			int i = 0;
+			for (const auto& resolution : m_DisplayResolutions)
+				AppendMenuW(hMenuResolution, MF_STRING | (clientSize == resolution ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(static_cast<size_t>(MenuID::FirstResolution) + i++), (std::to_wstring(resolution.cx) + L" × " + std::to_wstring(resolution.cy)).c_str());
+			AppendMenuW(hMenu, MF_STRING | (isFPSVisible ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(isFPSVisible ? MenuID::HideFPS : MenuID::ShowFPS), L"Show FPS");
+			AppendMenuW(hMenu, MF_SEPARATOR, 0, nullptr);
+			AppendMenuW(hMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuGlow), L"Glow");
+			AppendMenuW(hMenuGlow, MF_STRING | (isPlayingGlowAnimation ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(isPlayingGlowAnimation ? MenuID::GlowPauseAnimation : MenuID::GlowPlayAnimation), lpcPlayAnimation);
+			AppendMenuW(hMenuGlow, MF_STRING, static_cast<UINT_PTR>(MenuID::GlowReset), lpcReset);
+			AppendMenuW(hMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuRotation), L"Rotation");
+			AppendMenuW(hMenuRotation, MF_STRING | (isPlayingRotationAnimation ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(isPlayingRotationAnimation ? MenuID::RotationPauseAnimation : MenuID::RotationPlayAnimation), lpcPlayAnimation);
+			AppendMenuW(hMenuRotation, MF_STRING, static_cast<UINT_PTR>(MenuID::RotationReset), lpcReset);
+			AppendMenuW(hMenuRotation, MF_STRING | (isRotationClockwise ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(isRotationClockwise ? MenuID::RotationCounterclockwise : MenuID::RotationClockwise), L"Clockwise");
+			AppendMenuW(hMenu, MF_SEPARATOR, 0, nullptr);
+			AppendMenuW(hMenu, MF_STRING, static_cast<UINT_PTR>(MenuID::ViewSourceCodeOnGitHub), L"View Source Code on GitHub");
+			AppendMenuW(hMenu, MF_SEPARATOR, 0, nullptr);
+			AppendMenuW(hMenu, MF_POPUP, static_cast<UINT_PTR>(MenuID::Exit), L"Exit");
 			POINT pt{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 			if (pt.x == -1 && pt.y == -1)
 				GetCursorPos(&pt);
-			TrackPopupMenu(hMenu, TPM_LEFTALIGN, pt.x, pt.y, 0, hWnd, NULL);
+			TrackPopupMenu(hMenu, TPM_LEFTALIGN, pt.x, pt.y, 0, hWnd, nullptr);
 			DestroyMenu(hMenu);
 		}	break;
 		case WM_COMMAND: {
-			const MenuID menuId = (MenuID)wParam;
+			const auto menuId = static_cast<MenuID>(wParam);
 			switch (menuId) {
 			case MenuID::WindowModeWindowed: {
-				if (m_WindowModeHelper->GetMode() != WindowMode::Windowed && m_WindowModeHelper->SetMode(WindowMode::Windowed)) {
-					m_HasTitleBar = true;
-					MyAppSettingsData::Save(WindowMode::Windowed);
-				}
+				constexpr WindowMode WindowMode = WindowMode::Windowed;
+				if (m_WindowModeHelper->GetMode() != WindowMode && m_WindowModeHelper->SetMode(WindowMode))
+					MyAppSettingsData::Save(WindowMode);
 			}	break;
 			case MenuID::WindowModeBorderless: {
-				if (m_WindowModeHelper->GetMode() != WindowMode::Borderless && m_WindowModeHelper->SetMode(WindowMode::Borderless)) {
-					m_HasTitleBar = false;
-					MyAppSettingsData::Save(WindowMode::Borderless);
-				}
+				constexpr WindowMode WindowMode = WindowMode::Borderless;
+				if (m_WindowModeHelper->GetMode() != WindowMode && m_WindowModeHelper->SetMode(WindowMode))
+					MyAppSettingsData::Save(WindowMode);
 			}	break;
 			case MenuID::WindowModeFullScreen: {
-				if (m_WindowModeHelper->GetMode() != WindowMode::FullScreen && m_WindowModeHelper->SetMode(WindowMode::FullScreen))
-					MyAppSettingsData::Save(WindowMode::FullScreen);
+				constexpr WindowMode WindowMode = WindowMode::FullScreen;
+				if (m_WindowModeHelper->GetMode() != WindowMode && m_WindowModeHelper->SetMode(WindowMode))
+					MyAppSettingsData::Save(WindowMode);
 			}	break;
-			case MenuID::ShowFramesPerSecond:
-			case MenuID::HideFramesPerSecond: {
-				const bool isFramesPerSecondVisible = !m_ILoveYouDemo->IsFramesPerSecondVisible();
-				m_ILoveYouDemo->ShowFramesPerSecond(isFramesPerSecondVisible);
-				MyAppSettingsData::Save(MyAppSettingsData::Key_bool::ShowFramesPerSecond, isFramesPerSecondVisible);
+			case MenuID::ShowFPS:
+			case MenuID::HideFPS: {
+				const bool isFPSVisible = !m_ILoveYouDemo->IsFPSVisible();
+				m_ILoveYouDemo->ShowFPS(isFPSVisible);
+				MyAppSettingsData::Save(MyAppSettingsData::Key_bool::ShowFPS, isFPSVisible);
 			}	break;
 			case MenuID::GlowPlayAnimation:
-			case MenuID::GlowPauseAnimation: m_ILoveYouDemo->ReverseAnimationState(ILoveYou::AnimationSet::AnimationType::Glow); break;
-			case MenuID::GlowReset: m_ILoveYouDemo->SetForegroundGlowRadiusScale(); break;
+			case MenuID::GlowPauseAnimation: m_ILoveYouDemo->ReverseAnimationState(ILoveYou::Animation::Glow); break;
+			case MenuID::GlowReset: m_ILoveYouDemo->ResetForegroundGlowRadiusScale(); break;
 			case MenuID::RotationPlayAnimation:
-			case MenuID::RotationPauseAnimation: m_ILoveYouDemo->ReverseAnimationState(ILoveYou::AnimationSet::AnimationType::Rotation); break;
-			case MenuID::RotationReset: m_ILoveYouDemo->SetForegroundRotation(); break;
+			case MenuID::RotationPauseAnimation: m_ILoveYouDemo->ReverseAnimationState(ILoveYou::Animation::Rotation); break;
+			case MenuID::RotationReset: m_ILoveYouDemo->ResetForegroundRotation(); break;
 			case MenuID::RotationClockwise:
 			case MenuID::RotationCounterclockwise: m_ILoveYouDemo->ReverseRotation(); break;
-			case MenuID::ViewSourceCodeOnGitHub: ShellExecuteW(NULL, L"open", L"https://github.com/Hydr10n/I-Love-You-Demo", NULL, NULL, SW_SHOW); break;
+			case MenuID::ViewSourceCodeOnGitHub: ShellExecuteW(nullptr, L"open", L"https://github.com/Hydr10n/I-Love-You-Demo", nullptr, nullptr, SW_SHOW); break;
 			case MenuID::Exit: SendMessageW(hWnd, WM_CLOSE, 0, 0); break;
 			default: {
-				const auto& systemDisplayResolution = m_SystemDisplayResolutionSet[(size_t)menuId - (size_t)MenuID::FirstResolution];
-				if (systemDisplayResolution != m_WindowModeHelper->GetResolution() && m_WindowModeHelper->SetResolution(systemDisplayResolution, m_WindowModeHelper->GetMode() != WindowMode::FullScreen)) {
-					m_ILoveYouDemo->Resize((UINT32)systemDisplayResolution.PixelWidth, (UINT32)systemDisplayResolution.PixelHeight);
-					MyAppSettingsData::Save(systemDisplayResolution);
+				const auto& resolution = m_DisplayResolutions[static_cast<size_t>(menuId) - static_cast<size_t>(MenuID::FirstResolution)];
+				const auto clientSize = m_WindowModeHelper->GetClientSize();
+				if (resolution != clientSize && m_WindowModeHelper->SetClientSize(resolution)) {
+					m_ILoveYouDemo->OnWindowSizeChanged(wParam, MAKELPARAM(resolution.cx, resolution.cy));
+					MyAppSettingsData::Save(resolution);
 				}
 			}	break;
 			}
 		}	break;
+		case WM_LBUTTONDOWN: {
+			SetCapture(hWnd);
+			RECT rc;
+			GetClientRect(hWnd, &rc);
+			MapWindowRect(hWnd, HWND_DESKTOP, &rc);
+			ClipCursor(&rc);
+			m_ILoveYouDemo->OnMouseLeftButtonDown(wParam, lParam);
+		}	break;
+		case WM_LBUTTONUP: ReleaseCapture(); break;
+		case WM_CAPTURECHANGED: ClipCursor(nullptr); break;
+		case WM_MOUSEMOVE: m_ILoveYouDemo->OnMouseMove(wParam, lParam); break;
+		case WM_MOUSEWHEEL: m_ILoveYouDemo->OnMouseWheel(wParam, lParam); break;
+		case WM_SIZE: {
+			switch (wParam) {
+			case SIZE_MINIMIZED: m_ILoveYouDemo->OnSuspending(); break;
+			case SIZE_RESTORED: m_ILoveYouDemo->OnResuming(); break;
+			}
+		}	break;
+		case WM_SYSKEYDOWN: {
+			if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000 && m_WindowModeHelper->ToggleMode())
+				MyAppSettingsData::Save(m_WindowModeHelper->GetMode());
+		}	break;
+		case WM_MENUCHAR: return MAKELRESULT(0, MNC_CLOSE);
 		case WM_DESTROY: PostQuitMessage(0); break;
 		default: return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 		}

@@ -2,14 +2,15 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{bfe788ce-2427-41d9-a2c8-dd44e9fadb80}</UniqueIdentifier>
+      <UniqueIdentifier>{78594cc1-dc19-463c-acec-43510d2f5010}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)WindowUtils.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)DisplayHelpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)WindowModeHelper.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)Resolution.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

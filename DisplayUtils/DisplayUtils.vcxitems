@@ -15,5 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)DisplayUtils.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Resolution.h" />
   </ItemGroup>
 </Project>

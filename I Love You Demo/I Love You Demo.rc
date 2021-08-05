@@ -71,7 +71,7 @@ BEGIN
             VALUE "CompanyName", "Hydr10n"
             VALUE "FileVersion", "1.0.0.11"
             VALUE "InternalName", "I Love You Demo.exe"
-            VALUE "LegalCopyright", "© 2021 Hydr10n@GitHub"
+            VALUE "LegalCopyright", "© Hydr10n@GitHub"
             VALUE "OriginalFilename", "I Love You Demo.exe"
             VALUE "ProductName", "I Love You Demo"
             VALUE "ProductVersion", "1.0.0.11"

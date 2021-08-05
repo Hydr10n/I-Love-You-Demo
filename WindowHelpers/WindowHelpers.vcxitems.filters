@@ -2,11 +2,11 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{06f499c8-b57b-47f6-8400-0ec1b9c47c20}</UniqueIdentifier>
+      <UniqueIdentifier>{08ccb42f-1e7d-4197-895f-634cee99f4b7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)FileUtils.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)WindowHelpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

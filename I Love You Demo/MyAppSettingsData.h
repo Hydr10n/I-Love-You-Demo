@@ -1,24 +1,24 @@
 #pragma once
 
 #include "AppData.h"
-#include "WindowUtils.h"
-#include "FileUtils.h"
+#include "WindowHelpers.h"
+#include <filesystem>
 
-class MyAppSettingsData final {
+class MyAppSettingsData {
 public:
-	enum class Key_bool { ShowFramesPerSecond, ShowHelpAtStartup };
+	enum class Key_bool { ShowFPS, ShowHelpAtStartup };
 
 	static LPCWSTR GetPath() { return m_Path.c_str(); }
 
 	static bool Save(Key_bool key, bool data) {
 		const auto& sectionKeyPair = ToSectionKeyPair(key);
-		return Hydr10n::DataUtils::AppData::Save(ToString(sectionKeyPair.first), sectionKeyPair.second, GetPath(), ToString(data));
+		return Hydr10n::Data::AppData::Save(ToString(sectionKeyPair.first), sectionKeyPair.second, GetPath(), ToString(data));
 	}
 
 	static bool Load(Key_bool key, bool& data) {
 		WCHAR buffer[7];
 		const auto& sectionKeyPair = ToSectionKeyPair(key);
-		bool ret = Hydr10n::DataUtils::AppData::Load(ToString(sectionKeyPair.first), sectionKeyPair.second, GetPath(), buffer, ARRAYSIZE(buffer));
+		bool ret = Hydr10n::Data::AppData::Load(ToString(sectionKeyPair.first), sectionKeyPair.second, GetPath(), buffer, ARRAYSIZE(buffer));
 		if (ret) {
 			RemoveSubstringStartingWithSpace(buffer);
 			ret = ToValue(buffer, data);
@@ -28,11 +28,11 @@ public:
 		return ret;
 	}
 
-	static bool Save(Hydr10n::WindowUtils::WindowMode data) { return Hydr10n::DataUtils::AppData::Save(ToString(Section::DisplaySettings), KeyWindowMode, GetPath(), ToString(data)); }
+	static bool Save(Hydr10n::WindowHelpers::WindowMode data) { return Hydr10n::Data::AppData::Save(ToString(Section::DisplaySettings), KeyWindowMode, GetPath(), ToString(data)); }
 
-	static bool Load(Hydr10n::WindowUtils::WindowMode& data) {
+	static bool Load(Hydr10n::WindowHelpers::WindowMode& data) {
 		WCHAR buffer[12];
-		bool ret = Hydr10n::DataUtils::AppData::Load(ToString(Section::DisplaySettings), KeyWindowMode, GetPath(), buffer, ARRAYSIZE(buffer));
+		bool ret = Hydr10n::Data::AppData::Load(ToString(Section::DisplaySettings), KeyWindowMode, GetPath(), buffer, ARRAYSIZE(buffer));
 		if (ret) {
 			RemoveSubstringStartingWithSpace(buffer);
 			ret = ToValue(buffer, data);
@@ -42,16 +42,16 @@ public:
 		return ret;
 	}
 
-	static bool Save(const Hydr10n::DisplayUtils::DisplayResolution& data) {
-		using Hydr10n::DataUtils::AppData;
+	static bool Save(const SIZE& data) {
+		using Hydr10n::Data::AppData;
 		const LPCWSTR lpcwSection = ToString(Section::DisplaySettings), lpcwPath = GetPath();
-		return AppData::Save(lpcwSection, KeyResolutionWidth, lpcwPath, data.PixelWidth) && AppData::Save(lpcwSection, KeyResolutionHeight, lpcwPath, data.PixelHeight);
+		return AppData::Save(lpcwSection, KeyResolutionWidth, lpcwPath, data.cx) && AppData::Save(lpcwSection, KeyResolutionHeight, lpcwPath, data.cy);
 	}
 
-	static bool Load(Hydr10n::DisplayUtils::DisplayResolution& data) {
-		using Hydr10n::DataUtils::AppData;
+	static bool Load(SIZE& data) {
+		using Hydr10n::Data::AppData;
 		const LPCWSTR lpcwSection = ToString(Section::DisplaySettings), lpcwPath = GetPath();
-		const bool ret = AppData::Load(lpcwSection, KeyResolutionWidth, lpcwPath, data.PixelWidth) && AppData::Load(lpcwSection, KeyResolutionHeight, lpcwPath, data.PixelHeight);
+		const bool ret = AppData::Load(lpcwSection, KeyResolutionWidth, lpcwPath, data.cx) && AppData::Load(lpcwSection, KeyResolutionHeight, lpcwPath, data.cy);
 		if (!ret)
 			data = {};
 		return ret;
@@ -65,7 +65,7 @@ private:
 	static constexpr LPCWSTR KeyWindowMode = L"WindowMode",
 		KeyResolutionWidth = L"ResolutionWidth", KeyResolutionHeight = L"ResolutionHeight";
 
-	static std::wstring m_Path;
+	static const std::wstring m_Path;
 
 	static bool RemoveSubstringStartingWithSpace(wchar_t* str) {
 		const std::wstring wstr(str);
@@ -78,7 +78,7 @@ private:
 
 	static SectionKeyPair ToSectionKeyPair(Key_bool val) {
 		switch (val) {
-		case Key_bool::ShowFramesPerSecond: return SectionKeyPair(Section::DisplaySettings, L"ShowFramesPerSecond");
+		case Key_bool::ShowFPS: return SectionKeyPair(Section::DisplaySettings, L"ShowFPS");
 		case Key_bool::ShowHelpAtStartup: return SectionKeyPair(Section::MiscellaneousSettings, L"ShowHelpAtStartup");
 		default: throw;
 		}
@@ -106,13 +106,13 @@ private:
 		return true;
 	}
 
-	static LPCWSTR ToString(Hydr10n::WindowUtils::WindowMode val) {
+	static LPCWSTR ToString(Hydr10n::WindowHelpers::WindowMode val) {
 		constexpr LPCWSTR strs[] = { L"Windowed", L"Borderless", L"FullScreen" };
 		return strs[(size_t)val];
 	}
 
-	static bool ToValue(LPCWSTR str, Hydr10n::WindowUtils::WindowMode& val) {
-		using Hydr10n::WindowUtils::WindowMode;
+	static bool ToValue(LPCWSTR str, Hydr10n::WindowHelpers::WindowMode& val) {
+		using Hydr10n::WindowHelpers::WindowMode;
 		const std::wstring wstr(str);
 		if (wstr == ToString(WindowMode::Borderless))
 			val = WindowMode::Borderless;
@@ -125,14 +125,6 @@ private:
 		}
 		return true;
 	}
-
-	static const struct static_constructor {
-		static_constructor() noexcept(false) {
-			if (Hydr10n::FileUtils::GetModuleFileNameW(m_Path))
-				m_Path.replace(m_Path.find_last_of(L'\\') + 1, m_Path.size(), L"Settings.ini");
-		}
-	} m_static_constructor;
 };
 
-decltype(MyAppSettingsData::m_static_constructor) MyAppSettingsData::m_static_constructor;
-decltype(MyAppSettingsData::m_Path) MyAppSettingsData::m_Path;
+decltype(MyAppSettingsData::m_Path) MyAppSettingsData::m_Path = std::filesystem::path(*__wargv).replace_filename("Settings.ini");

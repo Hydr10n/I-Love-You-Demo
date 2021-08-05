@@ -1,17 +1,18 @@
 /*
  * Header File: ILoveYouDemo.h
- * Last Update: 2021/02/14
+ * Last Update: 2021/08/05
  *
  * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
  */
 
 #pragma once
 
-#include "DirectXHelpers.h"
 #include "StepTimer.h"
-#include "set_helper.h"
-#include <string>
+#include "DirectXHelpers.h"
 #include <d2d1effects.h>
+#include <string>
+#include <set>
+#include <algorithm>
 
 #pragma comment(lib, "dxguid")
 
@@ -19,167 +20,136 @@ constexpr float CalculateAverageVelocity(float value, float millionSeconds, floa
 
 namespace Hydr10n {
 	namespace Demos {
-		class ILoveYou final {
+		class ILoveYou {
 		public:
-			class AnimationSet final {
-			public:
-				enum class AnimationType { Glow, Rotation };
+			enum class Animation { Glow, Rotation };
 
-				AnimationSet(const std::initializer_list<AnimationType>& animationTypes) : m_AnimationTypes(animationTypes) {}
-
-				bool Add(AnimationType animationType) { return std_container_helpers::set_helper::modify(m_AnimationTypes, animationType, false); }
-
-				bool Remove(AnimationType animationType) { return std_container_helpers::set_helper::modify(m_AnimationTypes, animationType, true); }
-
-				bool Contains(AnimationType animationType) const { return m_AnimationTypes.find(animationType) != m_AnimationTypes.cend(); }
-
-				bool IsEmpty() const { return m_AnimationTypes.empty(); }
-
-			private:
-				std::set<AnimationType> m_AnimationTypes;
-			};
-
-			ILoveYou(HWND hWnd, UINT32 pixelWidth = 0, UINT32 pixelHeight = 0) noexcept(false) : m_hWnd(hWnd) {
-				SystemErrorHelpers::ThrowIfFailed(D2D1CreateFactory(D2D1_FACTORY_TYPE::D2D1_FACTORY_TYPE_SINGLE_THREADED, (IUnknown**)&m_D2dFactory));
-				Resize(pixelWidth, pixelHeight);
-				m_StepTimer.SetFixedTimeStep(true);
-				m_StepTimer.SetTargetElapsedSeconds(1.0 / FPS);
-				m_IsInitialized = true;
+			ILoveYou(HWND hWnd, UINT width, UINT height, double targetFPS, bool isFixedTimeStep) noexcept(false) : m_hWnd(hWnd), m_TargetFPS(targetFPS) {
+				ErrorHelpers::ThrowIfFailed(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, m_D2dFactory.ReleaseAndGetAddressOf()));
+				OnWindowSizeChanged(0, MAKELPARAM(width, height));
+				m_StepTimer.SetTargetElapsedSeconds(1 / targetFPS);
+				m_StepTimer.SetFixedTimeStep(isFixedTimeStep);
 			}
 
-			void Resize(UINT32 pixelWidth, UINT32 pixelHeight) {
-				const bool isInitialized = m_IsInitialized;
-				m_IsInitialized = false;
-				CreateGraphicsResources(pixelWidth, pixelHeight);
-				CreateGraphicsEffects();
+			SIZE GetOutputSize() const { return m_OutputSize; }
+
+			void Tick() {
+				m_StepTimer.Tick([&] {
+					if (m_IsRunning)
+						Update();
+					});
+				Render();
+			}
+
+			void OnWindowSizeChanged(WPARAM wParam, LPARAM lParam) {
+				const SIZE size = { LOWORD(lParam), HIWORD(lParam) };
+				if (m_OutputSize.cx == size.cx && m_OutputSize.cy == size.cy)
+					return;
+				m_OutputSize = size;
+				CreateResources();
+				CreateEffects();
 				DrawImages();
-				if (m_IsInitialized = isInitialized)
-					Render();
 			}
 
-			void Tick(bool update = true) {
-				if (!update)
-					Render();
-				else if (IsRunning() && !m_AnimationSet.IsEmpty()) {
-					m_StepTimer.Tick([&] { Update(); });
-					Render();
-				}
-			}
-
-			void ShowFramesPerSecond(bool visible) {
-				m_IsFramesPerSecondVisible = visible;
-				if (!IsRunning() || m_AnimationSet.IsEmpty())
-					Render();
-			}
-
-			bool IsFramesPerSecondVisible() const noexcept { return m_IsFramesPerSecondVisible; }
-
-			void Pause() {
-				if (m_IsRunning) {
-					m_IsRunning = false;
-					Render();
-				}
-			}
-
-			void Resume() {
+			void OnResuming() {
 				if (!m_IsRunning) {
 					m_IsRunning = true;
 					m_StepTimer.ResetElapsedTime();
 				}
 			}
 
-			bool IsRunning() const noexcept { return m_IsRunning; }
+			void OnSuspending() { m_IsRunning = false; }
 
-			void ReverseAnimationState(AnimationSet::AnimationType animationType) {
-				if (m_AnimationSet.Contains(animationType)) {
-					m_AnimationSet.Remove(animationType);
-					if (m_AnimationSet.IsEmpty())
-						Pause();
+			void OnMouseLeftButtonDown(WPARAM wParam, LPARAM lParam) { m_CursorCoordinate = MAKEPOINTS(lParam); }
+
+			void OnMouseMove(WPARAM wParam, LPARAM lParam) {
+				if (wParam & MK_LBUTTON) {
+					const auto points = MAKEPOINTS(lParam);
+					auto foregroundRotation = m_ForegroundRotation;
+					foregroundRotation.y += 0.25f * (points.x - m_CursorCoordinate.x);
+					SetForegroundRotation(foregroundRotation);
+					m_CursorCoordinate = points;
 				}
-				else {
-					m_AnimationSet.Add(animationType);
-					Resume();
-				}
 			}
 
-			const AnimationSet& GetAnimationSet() const noexcept { return m_AnimationSet; }
+			void OnMouseWheel(WPARAM wParam, LPARAM lParam) { SetForegroundGlowRadiusScale(m_ForegroundGlowRadiusScale + 0.1f * GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA); }
 
-			void SetForegroundGlowRadiusScale(FLOAT scale = 0) {
-				using namespace SystemErrorHelpers;
-				if (!m_D2dEffectShadow)
-					throw_system_error((int)D2DERR_NOT_INITIALIZED);
-				scale = min(1, max(0, scale));
-				ThrowIfFailed(m_D2dEffectShadow->SetValue(D2D1_SHADOW_PROP::D2D1_SHADOW_PROP_BLUR_STANDARD_DEVIATION, m_MaxForegroundGlowRadius * scale));
-				m_ForegroundGlowRadiusScale = scale;
-				if (m_IsInitialized && !IsRunning())
-					Render();
+			void ShowFPS(bool visible) { m_IsFPSVisible = visible; }
+
+			bool IsFPSVisible() const { return m_IsFPSVisible; }
+
+			void ReverseAnimationState(Animation animation) {
+				if (m_Animations.contains(animation))
+					m_Animations.erase(animation);
+				else
+					m_Animations.insert(animation);
 			}
 
-			FLOAT GetForegroundGlowRadiusScale() const noexcept { return m_ForegroundGlowRadiusScale; }
+			const std::set<Animation>& GetAnimations() const { return m_Animations; }
 
-			void SetForegroundRotation(const D2D1_VECTOR_3F& rotation = {}) {
-				using namespace SystemErrorHelpers;
-				if (!m_D2dEffect3DPerspectiveTransform)
-					throw_system_error((int)D2DERR_NOT_INITIALIZED);
-				const D2D1_VECTOR_3F correctedRotation = D2D1::Vector3F(rotation.x - int(rotation.x / 360) * 360, rotation.y - int(rotation.y / 360) * 360, rotation.z - int(rotation.z / 360) * 360);
-				ThrowIfFailed(m_D2dEffect3DPerspectiveTransform->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP::D2D1_3DPERSPECTIVETRANSFORM_PROP_ROTATION, correctedRotation));
-				m_ForegroundRotation = correctedRotation;
-				if (m_IsInitialized && !IsRunning())
-					Render();
-			}
+			void ResetForegroundGlowRadiusScale() { SetForegroundGlowRadiusScale(0); }
 
-			const D2D1_VECTOR_3F& GetForegroundRotation() const noexcept { return m_ForegroundRotation; }
+			void ResetForegroundRotation() { SetForegroundRotation(D2D1::Vector3F()); }
 
-			void ReverseRotation() noexcept { m_IsRotationClockwise = !m_IsRotationClockwise; }
+			void ReverseRotation() { m_IsRotationClockwise = !m_IsRotationClockwise; }
 
-			bool IsRotationClockwise() const noexcept { return m_IsRotationClockwise; }
+			bool IsRotationClockwise() const { return m_IsRotationClockwise; }
 
 		private:
-			static constexpr FLOAT FPS = 60,
-				DefaultDeviceIndependentHeight = 800,
+			static constexpr FLOAT DefaultDeviceIndependentHeight = 800,
 				GlowAnimationDuration = 1250, RotationAnimationDuration = GlowAnimationDuration * 2;
 
-			bool m_IsInitialized{}, m_IsRunning{ true }, m_IsFramesPerSecondVisible{ true }, m_IsGlowFadeIn{ true }, m_IsRotationClockwise{ true };
+			const HWND m_hWnd;
+			const double m_TargetFPS;
+
+			bool m_IsRunning{}, m_IsFPSVisible{}, m_IsGlowFadeIn{ true }, m_IsRotationClockwise{ true };
 			FLOAT m_Scale, m_MaxForegroundGlowRadius, m_ForegroundGlowRadiusScale{};
-			HWND m_hWnd;
+			POINTS m_CursorCoordinate{};
+			SIZE m_OutputSize;
 			D2D1_SIZE_F m_D2dSize;
 			D2D1_VECTOR_3F m_ForegroundRotation{};
-			AnimationSet m_AnimationSet{ AnimationSet::AnimationType::Glow, AnimationSet::AnimationType::Rotation };
+			std::set<Animation> m_Animations{ Animation::Glow, Animation::Rotation };
 			DX::StepTimer m_StepTimer;
 			Microsoft::WRL::ComPtr<ID2D1Factory> m_D2dFactory;
 			Microsoft::WRL::ComPtr<ID2D1DeviceContext> m_D2dDeviceContext;
 			Microsoft::WRL::ComPtr<ID2D1Bitmap1> m_D2dBitmap1Background, m_D2dBitmap1Foreground;
 			Microsoft::WRL::ComPtr<ID2D1Effect> m_D2dEffect, m_D2dEffectShadow, m_D2dEffect3DPerspectiveTransform;
 
-			void CreateGraphicsResources(UINT32 pixelWidth, UINT32 pixelHeight) {
+			void SetForegroundGlowRadiusScale(FLOAT scale) {
+				scale = std::clamp(scale, 0.f, 1.f);
+				ErrorHelpers::ThrowIfFailed(m_D2dEffectShadow->SetValue(D2D1_SHADOW_PROP_BLUR_STANDARD_DEVIATION, m_MaxForegroundGlowRadius * scale));
+				m_ForegroundGlowRadiusScale = scale;
+			}
+
+			void SetForegroundRotation(const D2D1_VECTOR_3F& rotation) {
+				const D2D1_VECTOR_3F correctedRotation = D2D1::Vector3F(rotation.x - static_cast<int>(rotation.x / 360) * 360, rotation.y - static_cast<int>(rotation.y / 360) * 360, rotation.z - static_cast<int>(rotation.z / 360) * 360);
+				ErrorHelpers::ThrowIfFailed(m_D2dEffect3DPerspectiveTransform->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP_ROTATION, correctedRotation));
+				m_ForegroundRotation = correctedRotation;
+			}
+
+			void CreateResources() {
 				using namespace DirectXHelpers;
-				using SystemErrorHelpers::ThrowIfFailed;
-				m_D2dDeviceContext.Reset();
-				m_D2dBitmap1Background.Reset();
-				m_D2dBitmap1Foreground.Reset();
+				using ErrorHelpers::ThrowIfFailed;
 				Microsoft::WRL::ComPtr<ID2D1HwndRenderTarget> d2dHwndRenderTarget;
-				ThrowIfFailed(D2D1CreateHwndRenderTarget(m_D2dFactory.Get(), m_hWnd, &d2dHwndRenderTarget, pixelWidth, pixelHeight));
-				ThrowIfFailed(D2D1GetDeviceContext(d2dHwndRenderTarget.Get(), &m_D2dDeviceContext));
-				ThrowIfFailed(D2D1CreateBitmapBGRA(m_D2dDeviceContext.Get(), &m_D2dBitmap1Background));
-				ThrowIfFailed(D2D1CreateBitmapBGRA(m_D2dDeviceContext.Get(), &m_D2dBitmap1Foreground));
+				ThrowIfFailed(D2D1CreateHwndRenderTarget(m_D2dFactory.Get(), m_hWnd, &d2dHwndRenderTarget, static_cast<UINT32>(m_OutputSize.cx), static_cast<UINT32>(m_OutputSize.cy)));
+				ThrowIfFailed(d2dHwndRenderTarget->QueryInterface(m_D2dDeviceContext.ReleaseAndGetAddressOf()));
+				ThrowIfFailed(D2D1CreateBitmapBGRA(m_D2dDeviceContext.Get(), m_D2dBitmap1Background.ReleaseAndGetAddressOf()));
+				ThrowIfFailed(D2D1CreateBitmapBGRA(m_D2dDeviceContext.Get(), m_D2dBitmap1Foreground.ReleaseAndGetAddressOf()));
 				m_D2dSize = m_D2dDeviceContext->GetSize();
 				m_Scale = m_D2dSize.height / DefaultDeviceIndependentHeight;
 			}
 
-			void CreateGraphicsEffects() {
+			void CreateEffects() {
 				using namespace D2D1;
-				using SystemErrorHelpers::ThrowIfFailed;
-				m_D2dEffectShadow.Reset();
-				m_D2dEffect3DPerspectiveTransform.Reset();
-				m_D2dEffect.Reset();
+				using ErrorHelpers::ThrowIfFailed;
 				Microsoft::WRL::ComPtr<ID2D1Effect> d2dEffectComposite;
-				ThrowIfFailed(m_D2dDeviceContext->CreateEffect(CLSID_D2D1Shadow, &m_D2dEffectShadow));
-				ThrowIfFailed(m_D2dDeviceContext->CreateEffect(CLSID_D2D1Composite, &d2dEffectComposite));
-				ThrowIfFailed(m_D2dDeviceContext->CreateEffect(CLSID_D2D13DPerspectiveTransform, &m_D2dEffect3DPerspectiveTransform));
-				ThrowIfFailed(m_D2dEffectShadow->SetValue(D2D1_SHADOW_PROP::D2D1_SHADOW_PROP_COLOR, Vector4F(1, 1, 1, 0.5f)));
-				ThrowIfFailed(m_D2dEffect3DPerspectiveTransform->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP::D2D1_3DPERSPECTIVETRANSFORM_PROP_ROTATION_ORIGIN, Vector3F(m_D2dSize.width / 2)));
-				ThrowIfFailed(m_D2dEffect3DPerspectiveTransform->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP::D2D1_3DPERSPECTIVETRANSFORM_PROP_PERSPECTIVE_ORIGIN, Vector2F(m_D2dSize.width / 2, m_D2dSize.height / 2)));
-				ThrowIfFailed(m_D2dEffect3DPerspectiveTransform->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP::D2D1_3DPERSPECTIVETRANSFORM_PROP_DEPTH, 1200 * m_Scale));
+				ThrowIfFailed(m_D2dDeviceContext->CreateEffect(CLSID_D2D1Shadow, m_D2dEffectShadow.ReleaseAndGetAddressOf()));
+				ThrowIfFailed(m_D2dDeviceContext->CreateEffect(CLSID_D2D1Composite, d2dEffectComposite.ReleaseAndGetAddressOf()));
+				ThrowIfFailed(m_D2dDeviceContext->CreateEffect(CLSID_D2D13DPerspectiveTransform, m_D2dEffect3DPerspectiveTransform.ReleaseAndGetAddressOf()));
+				ThrowIfFailed(m_D2dEffectShadow->SetValue(D2D1_SHADOW_PROP_COLOR, Vector4F(1, 1, 1, 0.5f)));
+				ThrowIfFailed(m_D2dEffect3DPerspectiveTransform->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP_ROTATION_ORIGIN, Vector3F(m_D2dSize.width / 2)));
+				ThrowIfFailed(m_D2dEffect3DPerspectiveTransform->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP_PERSPECTIVE_ORIGIN, Vector2F(m_D2dSize.width / 2, m_D2dSize.height / 2)));
+				ThrowIfFailed(m_D2dEffect3DPerspectiveTransform->SetValue(D2D1_3DPERSPECTIVETRANSFORM_PROP_DEPTH, 1200 * m_Scale));
 				m_D2dEffectShadow->SetInput(0, m_D2dBitmap1Foreground.Get());
 				d2dEffectComposite->SetInputEffect(0, m_D2dEffectShadow.Get());
 				d2dEffectComposite->SetInput(1, m_D2dBitmap1Foreground.Get());
@@ -190,20 +160,21 @@ namespace Hydr10n {
 			void DrawImages() {
 				using namespace D2D1;
 				using DirectXHelpers::D2D1DrawTextNormal;
-				using SystemErrorHelpers::ThrowIfFailed;
+				using ErrorHelpers::ThrowIfFailed;
 				constexpr FLOAT HeartScale = 0.8f;
 				Microsoft::WRL::ComPtr<ID2D1Image> d2dImageOldTarget;
 				m_D2dDeviceContext->GetTarget(&d2dImageOldTarget);
 				m_D2dDeviceContext->SetTarget(m_D2dBitmap1Background.Get());
 				m_D2dDeviceContext->BeginDraw();
 				DrawBackground(m_D2dDeviceContext.Get());
-				ThrowIfFailed(D2D1DrawTextNormal(m_D2dDeviceContext.Get(), L"Segoe UI", 24 * m_Scale, DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER, DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER, L"Copyright © Programmer-Yang_Xun@outlook.com", ColorF(ColorF::White), &RectF(0, m_D2dSize.height * (0.5f + HeartScale / 2), m_D2dSize.width, m_D2dSize.height)));
+				const D2D1_RECT_F rect = RectF(0, m_D2dSize.height * (0.5f + HeartScale / 2), m_D2dSize.width, m_D2dSize.height);
+				ThrowIfFailed(D2D1DrawTextNormal(m_D2dDeviceContext.Get(), L"Segoe UI", 24 * m_Scale, DWRITE_TEXT_ALIGNMENT_CENTER, DWRITE_PARAGRAPH_ALIGNMENT_CENTER, L"Copyright © Programmer-Yang_Xun@outlook.com", ColorF(ColorF::White), &rect));
 				ThrowIfFailed(m_D2dDeviceContext->EndDraw());
 				m_D2dDeviceContext->SetTarget(m_D2dBitmap1Foreground.Get());
 				m_D2dDeviceContext->BeginDraw();
 				m_D2dDeviceContext->Clear(ColorF(ColorF::White, 0));
 				DrawHeart(m_D2dDeviceContext.Get(), HeartScale);
-				ThrowIfFailed(D2D1DrawTextNormal(m_D2dDeviceContext.Get(), L"Comic Sans MS", 46 * m_Scale, DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER, DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER, L"I LOVE YOU\nFOREVER", ColorF(ColorF::White)));
+				ThrowIfFailed(D2D1DrawTextNormal(m_D2dDeviceContext.Get(), L"Comic Sans MS", 46 * m_Scale, DWRITE_TEXT_ALIGNMENT_CENTER, DWRITE_PARAGRAPH_ALIGNMENT_CENTER, L"I LOVE YOU\nFOREVER", ColorF(ColorF::White)));
 				ThrowIfFailed(m_D2dDeviceContext->EndDraw());
 				m_D2dDeviceContext->SetTarget(d2dImageOldTarget.Get());
 				m_MaxForegroundGlowRadius = m_Scale * HeartScale * 50;
@@ -211,39 +182,39 @@ namespace Hydr10n {
 				SetForegroundRotation(m_ForegroundRotation);
 			}
 
-			void DrawFramesPerSecond() {
+			void DrawFPS() {
 				using namespace D2D1;
 				const FLOAT fontSize = 22 * m_Scale;
-				SystemErrorHelpers::ThrowIfFailed(DirectXHelpers::D2D1DrawTextNormal(m_D2dDeviceContext.Get(), L"Segoe UI", fontSize, DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_LEADING, DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER, (L"FPS: " + std::to_wstring(!IsRunning() || m_AnimationSet.IsEmpty() ? 0 : m_StepTimer.GetFramesPerSecond())).c_str(), ColorF(ColorF::White), &RectF(0, 0, m_D2dSize.width, fontSize)));
+				const D2D1_RECT_F rect = RectF(0, 0, m_D2dSize.width, fontSize);
+				ErrorHelpers::ThrowIfFailed(DirectXHelpers::D2D1DrawTextNormal(m_D2dDeviceContext.Get(), L"Segoe UI", fontSize, DWRITE_TEXT_ALIGNMENT_LEADING, DWRITE_PARAGRAPH_ALIGNMENT_CENTER, (L"FPS: " + std::to_wstring(m_StepTimer.GetFramesPerSecond())).c_str(), ColorF(ColorF::White), &rect));
 			}
 
 			void Update() {
-				if (m_StepTimer.GetFrameCount() > 1) {
-					if (m_AnimationSet.Contains(AnimationSet::AnimationType::Glow)) {
-						SetForegroundGlowRadiusScale(m_ForegroundGlowRadiusScale + (m_IsGlowFadeIn ? 1 : -1) * CalculateAverageVelocity(1, GlowAnimationDuration, FPS));
-						if (m_ForegroundGlowRadiusScale >= 1)
-							m_IsGlowFadeIn = false;
-						else if (m_ForegroundGlowRadiusScale <= 0)
-							m_IsGlowFadeIn = true;
-					}
-					if (m_AnimationSet.Contains(AnimationSet::AnimationType::Rotation)) {
-						D2D1_VECTOR_3F foregroundRotation = m_ForegroundRotation;
-						foregroundRotation.y += (m_IsRotationClockwise ? -1 : 1) * CalculateAverageVelocity(360, RotationAnimationDuration, FPS);
-						SetForegroundRotation(foregroundRotation);
-					}
+				if (m_StepTimer.GetFrameCount() < 2)
+					return;
+				if (m_Animations.contains(Animation::Glow)) {
+					SetForegroundGlowRadiusScale(m_ForegroundGlowRadiusScale + (m_IsGlowFadeIn ? 1 : -1) * CalculateAverageVelocity(1, GlowAnimationDuration, static_cast<float>(m_TargetFPS)));
+					if (m_ForegroundGlowRadiusScale >= 1)
+						m_IsGlowFadeIn = false;
+					else if (m_ForegroundGlowRadiusScale <= 0)
+						m_IsGlowFadeIn = true;
+				}
+				if (m_Animations.contains(Animation::Rotation)) {
+					D2D1_VECTOR_3F foregroundRotation = m_ForegroundRotation;
+					foregroundRotation.y += (m_IsRotationClockwise ? -1 : 1) * CalculateAverageVelocity(360, RotationAnimationDuration, static_cast<float>(m_TargetFPS));
+					SetForegroundRotation(foregroundRotation);
 				}
 			}
 
 			void Render() {
-				using namespace SystemErrorHelpers;
-				if (!m_IsInitialized)
-					throw_system_error((int)D2DERR_NOT_INITIALIZED);
+				if (!m_StepTimer.GetFrameCount())
+					return;
 				m_D2dDeviceContext->BeginDraw();
 				m_D2dDeviceContext->DrawImage(m_D2dBitmap1Background.Get());
 				m_D2dDeviceContext->DrawImage(m_D2dEffect.Get());
-				if (m_IsFramesPerSecondVisible)
-					DrawFramesPerSecond();
-				ThrowIfFailed(m_D2dDeviceContext->EndDraw());
+				if (m_IsFPSVisible)
+					DrawFPS();
+				ErrorHelpers::ThrowIfFailed(m_D2dDeviceContext->EndDraw());
 			}
 
 			static void DrawBackground(ID2D1RenderTarget* pD2dRenderTarget) {
@@ -254,14 +225,14 @@ namespace Hydr10n {
 				};
 				const D2D1_SIZE_F d2dSize = pD2dRenderTarget->GetSize();
 				Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> d2dLinearGradientBrush;
-				SystemErrorHelpers::ThrowIfFailed(DirectXHelpers::D2D1CreateLinearGradientBrush(pD2dRenderTarget, d2dGradientStops, ARRAYSIZE(d2dGradientStops), LinearGradientBrushProperties(Point2F(), Point2F(d2dSize.width, d2dSize.height)), &d2dLinearGradientBrush));
+				ErrorHelpers::ThrowIfFailed(DirectXHelpers::D2D1CreateLinearGradientBrush(pD2dRenderTarget, d2dGradientStops, ARRAYSIZE(d2dGradientStops), LinearGradientBrushProperties(Point2F(), Point2F(d2dSize.width, d2dSize.height)), &d2dLinearGradientBrush));
 				pD2dRenderTarget->FillRectangle(RectF(0, 0, d2dSize.width, d2dSize.height), d2dLinearGradientBrush.Get());
 			}
 
 			static void DrawHeart(ID2D1RenderTarget* pD2dRenderTarget, FLOAT scale) {
 				using namespace D2D1;
 				using Microsoft::WRL::ComPtr;
-				using SystemErrorHelpers::ThrowIfFailed;
+				using ErrorHelpers::ThrowIfFailed;
 				const D2D1_GRADIENT_STOP d2dGradientStops[]{
 					GradientStop(0, ColorF(0xf02864)),
 					GradientStop(1, ColorF(0x282864))
@@ -286,12 +257,12 @@ namespace Hydr10n {
 				const FLOAT diameter = floorf(Radius * scale * 2);
 				const D2D1_POINT_2F origin = Point2F(size.width / 2, size.height / 2 - scale * (Height / 2 - Radius)),
 					startPoint = Point2F(origin.x - diameter, origin.y + (-acosf(1 - 1 / scale * diameter) + Pi) * scale);
-				d2dGeometrySink->BeginFigure(startPoint, D2D1_FIGURE_BEGIN::D2D1_FIGURE_BEGIN_FILLED);
+				d2dGeometrySink->BeginFigure(startPoint, D2D1_FIGURE_BEGIN_FILLED);
 				for (FLOAT x = -diameter + 1; x <= diameter; x++)
 					d2dGeometrySink->AddLine(Point2F(origin.x + x, origin.y + (-acosf(1 - 1 / scale * fabsf(x)) + Pi) * scale));
-				d2dGeometrySink->AddArc(ArcSegment(origin, SizeF(diameter / 2, diameter / 2), 0, D2D1_SWEEP_DIRECTION::D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE, D2D1_ARC_SIZE::D2D1_ARC_SIZE_SMALL));
-				d2dGeometrySink->AddArc(ArcSegment(startPoint, SizeF(diameter / 2, diameter / 2), 0, D2D1_SWEEP_DIRECTION::D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE, D2D1_ARC_SIZE::D2D1_ARC_SIZE_SMALL));
-				d2dGeometrySink->EndFigure(D2D1_FIGURE_END::D2D1_FIGURE_END_CLOSED);
+				d2dGeometrySink->AddArc(ArcSegment(origin, SizeF(diameter / 2, diameter / 2), 0, D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE, D2D1_ARC_SIZE_SMALL));
+				d2dGeometrySink->AddArc(ArcSegment(startPoint, SizeF(diameter / 2, diameter / 2), 0, D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE, D2D1_ARC_SIZE_SMALL));
+				d2dGeometrySink->EndFigure(D2D1_FIGURE_END_CLOSED);
 				ThrowIfFailed(d2dGeometrySink->Close());
 				pD2dRenderTarget->FillGeometry(d2dPathGeometry.Get(), d2dLinearGradientBrush.Get());
 			}

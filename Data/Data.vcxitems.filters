@@ -2,11 +2,11 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{7180c36d-a6fd-472d-adff-6bf88bcf9a46}</UniqueIdentifier>
+      <UniqueIdentifier>{7228009d-9afa-4151-ac01-d421507c6811}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)set_helper.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)AppData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
