@@ -102,7 +102,7 @@ namespace Hydr10n {
 			const HWND m_hWnd;
 			const double m_TargetFPS;
 
-			bool m_IsRunning{}, m_IsFPSVisible{}, m_IsGlowFadeIn{ true }, m_IsRotationClockwise{ true };
+			bool m_IsRunning{}, m_IsFPSVisible{}, m_IsGlowFadeIn = true, m_IsRotationClockwise = true;
 			FLOAT m_Scale, m_MaxForegroundGlowRadius, m_ForegroundGlowRadiusScale{};
 			POINTS m_CursorCoordinate{};
 			SIZE m_OutputSize;
