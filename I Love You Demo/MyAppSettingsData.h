@@ -107,7 +107,7 @@ private:
 	}
 
 	static LPCWSTR ToString(Hydr10n::WindowHelpers::WindowMode val) {
-		constexpr LPCWSTR strs[] = { L"Windowed", L"Borderless", L"FullScreen" };
+		constexpr LPCWSTR strs[] = { L"Windowed", L"Borderless", L"Fullscreen" };
 		return strs[(size_t)val];
 	}
 
@@ -116,8 +116,8 @@ private:
 		const std::wstring wstr(str);
 		if (wstr == ToString(WindowMode::Borderless))
 			val = WindowMode::Borderless;
-		else if (wstr == ToString(WindowMode::FullScreen))
-			val = WindowMode::FullScreen;
+		else if (wstr == ToString(WindowMode::Fullscreen))
+			val = WindowMode::Fullscreen;
 		else {
 			val = {};
 			if (wstr != ToString(val))

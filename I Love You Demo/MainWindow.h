@@ -76,7 +76,7 @@ private:
 		using Hydr10n::Demos::ILoveYou;
 		using Hydr10n::WindowHelpers::WindowMode;
 		enum class MenuID {
-			WindowModeWindowed, WindowModeBorderless, WindowModeFullScreen,
+			WindowModeWindowed, WindowModeBorderless, WindowModeFullscreen,
 			ShowFPS, HideFPS,
 			GlowPlayAnimation, GlowPauseAnimation, GlowReset,
 			RotationPlayAnimation, RotationPauseAnimation, RotationReset, RotationClockwise, RotationCounterclockwise,
@@ -98,7 +98,7 @@ private:
 			AppendMenuW(hMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuWindowMode), L"Window Mode");
 			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::Windowed ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(MenuID::WindowModeWindowed), L"Windowed");
 			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::Borderless ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(MenuID::WindowModeBorderless), L"Borderless");
-			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::FullScreen ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(MenuID::WindowModeFullScreen), L"Full-Screen");
+			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::Fullscreen ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(MenuID::WindowModeFullscreen), L"Fullscreen");
 			AppendMenuW(hMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuResolution), L"Resolution");
 			int i = 0;
 			for (const auto& resolution : m_DisplayResolutions)
@@ -135,8 +135,8 @@ private:
 				if (m_WindowModeHelper->GetMode() != WindowMode && m_WindowModeHelper->SetMode(WindowMode))
 					MyAppSettingsData::Save(WindowMode);
 			}	break;
-			case MenuID::WindowModeFullScreen: {
-				constexpr WindowMode WindowMode = WindowMode::FullScreen;
+			case MenuID::WindowModeFullscreen: {
+				constexpr WindowMode WindowMode = WindowMode::Fullscreen;
 				if (m_WindowModeHelper->GetMode() != WindowMode && m_WindowModeHelper->SetMode(WindowMode))
 					MyAppSettingsData::Save(WindowMode);
 			}	break;
