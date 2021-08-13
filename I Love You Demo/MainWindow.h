@@ -10,17 +10,14 @@
 
 class MainWindow : public Hydr10n::Windows::BaseWindow {
 public:
-	MainWindow(const MainWindow&) = delete;
-	MainWindow& operator=(const MainWindow&) = delete;
-
 	MainWindow() noexcept(false) : BaseWindow(L"Direct2D") {
 		using ErrorHelpers::ThrowIfFailed;
-		ThrowIfFailed(Initialize(0, L"I Love You Demo", DefaultWindowedModeStyle, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr));
-		SIZE resolution;
-		if (MyAppSettingsData::Load(resolution)) {
+		ThrowIfFailed(Create(DefaultTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr));
+		SIZE outputSize;
+		if (MyAppSettingsData::Load(outputSize)) {
 			const auto& maxDisplayResolution = *max_element(m_DisplayResolutions.cbegin(), m_DisplayResolutions.cend());
-			if (resolution > maxDisplayResolution)
-				resolution = maxDisplayResolution;
+			if (outputSize > maxDisplayResolution)
+				outputSize = maxDisplayResolution;
 		}
 		else {
 			Microsoft::WRL::ComPtr<ID2D1Factory> d2dFactory;
@@ -28,28 +25,28 @@ public:
 			FLOAT dpiX, dpiY;
 #pragma warning(suppress: 4996)
 			d2dFactory->GetDesktopDpi(&dpiX, &dpiY);
-			resolution = { Scale(DefaultDeviceIndependentClientSize.cx, dpiX), Scale(DefaultDeviceIndependentClientSize.cy, dpiY) };
+			outputSize = { Scale(650, dpiX), Scale(650, dpiY) };
 		}
 		const HWND hWnd = GetWindow();
 		Hydr10n::WindowHelpers::WindowMode windowMode;
 		MyAppSettingsData::Load(windowMode);
-		m_WindowModeHelper = std::make_unique<decltype(m_WindowModeHelper)::element_type>(hWnd, resolution, windowMode, 0, DefaultWindowedModeStyle, FALSE);
-		m_ILoveYouDemo = std::make_unique<decltype(m_ILoveYouDemo)::element_type>(hWnd, static_cast<UINT>(resolution.cx), static_cast<UINT>(resolution.cy), TargetFPS, false);
+		m_WindowModeHelper = std::make_unique<decltype(m_WindowModeHelper)::element_type>(hWnd, outputSize, windowMode, 0, WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, FALSE);
+		m_ILoveYouDemo = std::make_unique<decltype(m_ILoveYouDemo)::element_type>(hWnd, outputSize);
 		bool showFPS;
 		MyAppSettingsData::Load(MyAppSettingsData::Key_bool::ShowFPS, showFPS);
 		m_ILoveYouDemo->ShowFPS(showFPS);
-		ShowWindow(hWnd, SW_SHOW);
-		m_WindowModeHelper->SetMode(windowMode);
+	}
+
+	WPARAM Run() {
+		ShowWindow(GetWindow(), SW_SHOW);
+		m_WindowModeHelper->SetMode(m_WindowModeHelper->GetMode());
 		m_ILoveYouDemo->Tick();
 		bool showHelpAtStatup;
 		if (!MyAppSettingsData::Load(MyAppSettingsData::Key_bool::ShowHelpAtStartup, showHelpAtStatup) || showHelpAtStatup) {
-			MessageBoxW(hWnd, L"Window mode, resolution, FPS visibility and animations can be controlled in the context menu; glow & rotation of the heart image can be controlled with mouse. Pressing [Alt + Enter] toggles between windowed/borderless and full-screen mode.", L"Help", MB_OK);
+			MessageBoxW(nullptr, L"Window mode, resolution, FPS visibility and animations can be controlled in the context menu; glow & rotation of the heart image can be controlled with mouse. Pressing [Alt + Enter] toggles between windowed/borderless and full-screen mode.", L"Help", MB_OK);
 			if (!showHelpAtStatup)
 				MyAppSettingsData::Save(MyAppSettingsData::Key_bool::ShowHelpAtStartup, false);
 		}
-	}
-
-	DWORD Run() {
 		MSG msg;
 		do
 			if (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE)) {
@@ -59,20 +56,18 @@ public:
 			else
 				m_ILoveYouDemo->Tick();
 		while (msg.message != WM_QUIT);
-		return static_cast<DWORD>(msg.wParam);
+		return msg.wParam;
 	}
 
 private:
-	static constexpr double TargetFPS = 60;
-	static constexpr DWORD DefaultWindowedModeStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-	static constexpr SIZE DefaultDeviceIndependentClientSize{ 650, 650 };
+	static constexpr LPCWSTR DefaultTitle = L"I Love You";
 
 	const std::vector<Hydr10n::DisplayHelpers::Resolution> m_DisplayResolutions = Hydr10n::DisplayHelpers::GetDisplayResolutions();
 
-	std::unique_ptr<Hydr10n::Demos::ILoveYou> m_ILoveYouDemo;
 	std::unique_ptr<Hydr10n::WindowHelpers::WindowModeHelper> m_WindowModeHelper;
+	std::unique_ptr<Hydr10n::Demos::ILoveYou> m_ILoveYouDemo;
 
-	LRESULT CALLBACK HandleMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override {
+	LRESULT CALLBACK OnMessageReceived(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override {
 		using Hydr10n::Demos::ILoveYou;
 		using Hydr10n::WindowHelpers::WindowMode;
 		enum class MenuID {
@@ -87,7 +82,7 @@ private:
 		switch (uMsg) {
 		case WM_CONTEXTMENU: {
 			const auto mode = m_WindowModeHelper->GetMode();
-			const auto& clientSize = m_WindowModeHelper->GetClientSize();
+			const auto outputSize = m_WindowModeHelper->GetOutputSize();
 			const auto& animations = m_ILoveYouDemo->GetAnimations();
 			const bool isFPSVisible = m_ILoveYouDemo->IsFPSVisible(),
 				isPlayingGlowAnimation = animations.contains(ILoveYou::Animation::Glow),
@@ -102,7 +97,7 @@ private:
 			AppendMenuW(hMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuResolution), L"Resolution");
 			int i = 0;
 			for (const auto& resolution : m_DisplayResolutions)
-				AppendMenuW(hMenuResolution, MF_STRING | (clientSize == resolution ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(static_cast<size_t>(MenuID::FirstResolution) + i++), (std::to_wstring(resolution.cx) + L" × " + std::to_wstring(resolution.cy)).c_str());
+				AppendMenuW(hMenuResolution, MF_STRING | (outputSize == resolution ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(static_cast<size_t>(MenuID::FirstResolution) + i++), (std::to_wstring(resolution.cx) + L" × " + std::to_wstring(resolution.cy)).c_str());
 			AppendMenuW(hMenu, MF_STRING | (isFPSVisible ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(isFPSVisible ? MenuID::HideFPS : MenuID::ShowFPS), L"Show FPS");
 			AppendMenuW(hMenu, MF_SEPARATOR, 0, nullptr);
 			AppendMenuW(hMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuGlow), L"Glow");
@@ -158,9 +153,9 @@ private:
 			case MenuID::Exit: SendMessageW(hWnd, WM_CLOSE, 0, 0); break;
 			default: {
 				const auto& resolution = m_DisplayResolutions[static_cast<size_t>(menuId) - static_cast<size_t>(MenuID::FirstResolution)];
-				const auto clientSize = m_WindowModeHelper->GetClientSize();
-				if (resolution != clientSize && m_WindowModeHelper->SetClientSize(resolution)) {
-					m_ILoveYouDemo->OnWindowSizeChanged(wParam, MAKELPARAM(resolution.cx, resolution.cy));
+				const auto outputSize = m_WindowModeHelper->GetOutputSize();
+				if (resolution != outputSize && m_WindowModeHelper->SetOutputSize(resolution)) {
+					m_ILoveYouDemo->OnWindowSizeChanged(resolution);
 					MyAppSettingsData::Save(resolution);
 				}
 			}	break;
@@ -178,6 +173,7 @@ private:
 		case WM_CAPTURECHANGED: ClipCursor(nullptr); break;
 		case WM_MOUSEMOVE: m_ILoveYouDemo->OnMouseMove(wParam, lParam); break;
 		case WM_MOUSEWHEEL: m_ILoveYouDemo->OnMouseWheel(wParam, lParam); break;
+		case WM_MOVING: case WM_SIZING: m_ILoveYouDemo->Tick(); break;
 		case WM_SIZE: {
 			switch (wParam) {
 			case SIZE_MINIMIZED: m_ILoveYouDemo->OnSuspending(); break;

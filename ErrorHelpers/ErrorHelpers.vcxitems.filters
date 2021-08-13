@@ -1,13 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{4f21c1be-817d-4deb-b259-bbbe566277b1}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)ErrorHelpers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)ErrorHelpers.h" />
   </ItemGroup>
 </Project>

@@ -3,8 +3,6 @@
 #include <Windows.h>
 #include <system_error>
 
-#define QUOTE(x) #x
-
 namespace ErrorHelpers {
 	template <class T>
 	inline void WINAPI throw_std_system_error(T code, const char* message = "") { throw std::system_error(static_cast<int>(code), std::system_category(), message); }

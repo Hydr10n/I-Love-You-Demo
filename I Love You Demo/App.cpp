@@ -1,13 +1,6 @@
-/*
- * Project: I Love You Demo
- * Last Update: 2021/08/05
- *
- * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
- */
-
 #include "MainWindow.h"
 
-int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow) {
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow) {
 	int ret;
 	try { ret = static_cast<int>(MainWindow().Run()); }
 	catch (const std::system_error& e) {

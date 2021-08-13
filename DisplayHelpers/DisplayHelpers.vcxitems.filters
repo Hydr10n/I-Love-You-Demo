@@ -1,17 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{78594cc1-dc19-463c-acec-43510d2f5010}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)DisplayHelpers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Resolution.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)DisplayHelpers.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Resolution.h" />
   </ItemGroup>
 </Project>
