@@ -38,8 +38,10 @@ public:
 	}
 
 	WPARAM Run() {
-		ShowWindow(GetWindow(), SW_SHOW);
+		const auto window = GetWindow();
+		ShowWindow(window, SW_SHOW);
 		m_WindowModeHelper->SetMode(m_WindowModeHelper->GetMode());
+		UpdateWindow(window);
 		m_ILoveYouDemo->Tick();
 		bool showHelpAtStatup;
 		if (!MyAppSettingsData::Load(MyAppSettingsData::Key_bool::ShowHelpAtStartup, showHelpAtStatup) || showHelpAtStatup) {
