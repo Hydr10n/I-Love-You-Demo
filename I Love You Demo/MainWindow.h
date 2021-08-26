@@ -113,10 +113,13 @@ private:
 			AppendMenuW(hMenu, MF_STRING, static_cast<UINT_PTR>(MenuID::ViewSourceCodeOnGitHub), L"View Source Code on GitHub");
 			AppendMenuW(hMenu, MF_SEPARATOR, 0, nullptr);
 			AppendMenuW(hMenu, MF_POPUP, static_cast<UINT_PTR>(MenuID::Exit), L"Exit");
-			POINT pt{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-			if (pt.x == -1 && pt.y == -1)
-				GetCursorPos(&pt);
-			TrackPopupMenu(hMenu, TPM_LEFTALIGN, pt.x, pt.y, 0, hWnd, nullptr);
+			RECT rc{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+			if (rc.left == -1 && rc.top == -1) {
+				const auto hWnd = reinterpret_cast<HWND>(wParam);
+				GetClientRect(hWnd, &rc);
+				MapWindowRect(hWnd, HWND_DESKTOP, &rc);
+			}
+			TrackPopupMenu(hMenu, TPM_LEFTALIGN, static_cast<int>(rc.left), static_cast<int>(rc.top), 0, hWnd, nullptr);
 			DestroyMenu(hMenu);
 		}	break;
 		case WM_COMMAND: {
