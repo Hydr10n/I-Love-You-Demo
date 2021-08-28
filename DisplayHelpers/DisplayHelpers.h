@@ -1,6 +1,6 @@
 /*
  * Header File: DisplayHelpers.h
- * Last Update: 2021/08/05
+ * Last Update: 2021/08/28
  *
  * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
  */
@@ -12,7 +12,7 @@
 
 namespace Hydr10n {
 	namespace DisplayHelpers {
-		std::vector<Resolution> GetDisplayResolutions(LPCWSTR lpszDeviceName = nullptr) {
+		std::vector<Resolution> WINAPI GetDisplayResolutions(LPCWSTR lpszDeviceName = nullptr) {
 			std::vector<Resolution> resolutions;
 			DEVMODEW devMode;
 			devMode.dmSize = sizeof(devMode);
