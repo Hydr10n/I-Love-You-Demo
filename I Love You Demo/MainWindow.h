@@ -64,7 +64,7 @@ public:
 private:
 	static constexpr LPCWSTR DefaultTitle = L"I Love You";
 
-	const std::vector<Hydr10n::DisplayHelpers::Resolution> m_DisplayResolutions = Hydr10n::DisplayHelpers::GetDisplayResolutions();
+	const std::vector<DisplayHelpers::Resolution> m_DisplayResolutions = DisplayHelpers::GetDisplayResolutions();
 
 	std::unique_ptr<Hydr10n::WindowHelpers::WindowModeHelper> m_WindowModeHelper;
 	std::unique_ptr<Hydr10n::Demos::ILoveYou> m_ILoveYouDemo;
@@ -90,37 +90,37 @@ private:
 				isPlayingGlowAnimation = animations.contains(ILoveYou::Animation::Glow),
 				isPlayingRotationAnimation = animations.contains(ILoveYou::Animation::Rotation),
 				isRotationClockwise = m_ILoveYouDemo->IsRotationClockwise();
-			const LPCWSTR lpcPlayAnimation = L"Play Animation", lpcReset = L"Reset";
-			const HMENU hMenu = CreatePopupMenu(), hMenuWindowMode = CreatePopupMenu(), hMenuResolution = CreatePopupMenu(), hMenuGlow = CreatePopupMenu(), hMenuRotation = CreatePopupMenu();
-			AppendMenuW(hMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuWindowMode), L"Window Mode");
+			const auto playAnimation = L"Play Animation", reset = L"Reset";
+			const auto menu = CreatePopupMenu(), hMenuWindowMode = CreatePopupMenu(), hMenuResolution = CreatePopupMenu(), hMenuGlow = CreatePopupMenu(), hMenuRotation = CreatePopupMenu();
+			AppendMenuW(menu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuWindowMode), L"Window Mode");
 			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::Windowed ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(MenuID::WindowModeWindowed), L"Windowed");
 			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::Borderless ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(MenuID::WindowModeBorderless), L"Borderless");
 			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::Fullscreen ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(MenuID::WindowModeFullscreen), L"Fullscreen");
-			AppendMenuW(hMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuResolution), L"Resolution");
+			AppendMenuW(menu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuResolution), L"Resolution");
 			int i = 0;
 			for (const auto& resolution : m_DisplayResolutions)
 				AppendMenuW(hMenuResolution, MF_STRING | (outputSize == resolution ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(static_cast<size_t>(MenuID::FirstResolution) + i++), (std::to_wstring(resolution.cx) + L" × " + std::to_wstring(resolution.cy)).c_str());
-			AppendMenuW(hMenu, MF_STRING | (isFPSVisible ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(isFPSVisible ? MenuID::HideFPS : MenuID::ShowFPS), L"Show FPS");
-			AppendMenuW(hMenu, MF_SEPARATOR, 0, nullptr);
-			AppendMenuW(hMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuGlow), L"Glow");
-			AppendMenuW(hMenuGlow, MF_STRING | (isPlayingGlowAnimation ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(isPlayingGlowAnimation ? MenuID::GlowPauseAnimation : MenuID::GlowPlayAnimation), lpcPlayAnimation);
-			AppendMenuW(hMenuGlow, MF_STRING, static_cast<UINT_PTR>(MenuID::GlowReset), lpcReset);
-			AppendMenuW(hMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuRotation), L"Rotation");
-			AppendMenuW(hMenuRotation, MF_STRING | (isPlayingRotationAnimation ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(isPlayingRotationAnimation ? MenuID::RotationPauseAnimation : MenuID::RotationPlayAnimation), lpcPlayAnimation);
-			AppendMenuW(hMenuRotation, MF_STRING, static_cast<UINT_PTR>(MenuID::RotationReset), lpcReset);
+			AppendMenuW(menu, MF_STRING | (isFPSVisible ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(isFPSVisible ? MenuID::HideFPS : MenuID::ShowFPS), L"Show FPS");
+			AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
+			AppendMenuW(menu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuGlow), L"Glow");
+			AppendMenuW(hMenuGlow, MF_STRING | (isPlayingGlowAnimation ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(isPlayingGlowAnimation ? MenuID::GlowPauseAnimation : MenuID::GlowPlayAnimation), playAnimation);
+			AppendMenuW(hMenuGlow, MF_STRING, static_cast<UINT_PTR>(MenuID::GlowReset), reset);
+			AppendMenuW(menu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuRotation), L"Rotation");
+			AppendMenuW(hMenuRotation, MF_STRING | (isPlayingRotationAnimation ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(isPlayingRotationAnimation ? MenuID::RotationPauseAnimation : MenuID::RotationPlayAnimation), playAnimation);
+			AppendMenuW(hMenuRotation, MF_STRING, static_cast<UINT_PTR>(MenuID::RotationReset), reset);
 			AppendMenuW(hMenuRotation, MF_STRING | (isRotationClockwise ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(isRotationClockwise ? MenuID::RotationCounterclockwise : MenuID::RotationClockwise), L"Clockwise");
-			AppendMenuW(hMenu, MF_SEPARATOR, 0, nullptr);
-			AppendMenuW(hMenu, MF_STRING, static_cast<UINT_PTR>(MenuID::ViewSourceCodeOnGitHub), L"View Source Code on GitHub");
-			AppendMenuW(hMenu, MF_SEPARATOR, 0, nullptr);
-			AppendMenuW(hMenu, MF_POPUP, static_cast<UINT_PTR>(MenuID::Exit), L"Exit");
+			AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
+			AppendMenuW(menu, MF_STRING, static_cast<UINT_PTR>(MenuID::ViewSourceCodeOnGitHub), L"View Source Code on GitHub");
+			AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
+			AppendMenuW(menu, MF_POPUP, static_cast<UINT_PTR>(MenuID::Exit), L"Exit");
 			RECT rc{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 			if (rc.left == -1 && rc.top == -1) {
 				const auto hWnd = reinterpret_cast<HWND>(wParam);
 				GetClientRect(hWnd, &rc);
 				MapWindowRect(hWnd, HWND_DESKTOP, &rc);
 			}
-			TrackPopupMenu(hMenu, TPM_LEFTALIGN, static_cast<int>(rc.left), static_cast<int>(rc.top), 0, hWnd, nullptr);
-			DestroyMenu(hMenu);
+			TrackPopupMenu(menu, TPM_LEFTALIGN, static_cast<int>(rc.left), static_cast<int>(rc.top), 0, hWnd, nullptr);
+			DestroyMenu(menu);
 		}	break;
 		case WM_COMMAND: {
 			const auto menuId = static_cast<MenuID>(wParam);
