@@ -3,7 +3,7 @@
 #include "BaseWindow.h"
 #include "ILoveYouDemo.h"
 #include "DisplayHelpers.h"
-#include "MyAppSettingsData.h"
+#include "MyAppData.h"
 #include <memory>
 
 #define Scale(PixelCount, DPI) MulDiv(static_cast<int>(PixelCount), static_cast<int>(DPI), USER_DEFAULT_SCREEN_DPI)
@@ -12,9 +12,10 @@ class MainWindow : public Hydr10n::Windows::BaseWindow {
 public:
 	MainWindow() noexcept(false) : BaseWindow(L"Direct2D") {
 		using ErrorHelpers::ThrowIfFailed;
+		using SettingsData = MyAppData::SettingsData;
 		ThrowIfFailed(Create(DefaultTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr));
 		SIZE outputSize;
-		if (MyAppSettingsData::Load(outputSize)) {
+		if (SettingsData::Load(outputSize)) {
 			const auto& maxDisplayResolution = *max_element(m_DisplayResolutions.cbegin(), m_DisplayResolutions.cend());
 			if (outputSize > maxDisplayResolution)
 				outputSize = maxDisplayResolution;
@@ -28,26 +29,27 @@ public:
 			outputSize = { Scale(650, dpiX), Scale(650, dpiY) };
 		}
 		const HWND hWnd = GetWindow();
-		Hydr10n::WindowHelpers::WindowMode windowMode;
-		MyAppSettingsData::Load(windowMode);
+		auto windowMode = Hydr10n::WindowHelpers::WindowMode::Windowed;
+		SettingsData::Load(windowMode);
 		m_WindowModeHelper = std::make_unique<decltype(m_WindowModeHelper)::element_type>(hWnd, outputSize, windowMode, 0, WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, FALSE);
 		m_ILoveYouDemo = std::make_unique<decltype(m_ILoveYouDemo)::element_type>(hWnd, outputSize);
-		bool showFPS;
-		MyAppSettingsData::Load(MyAppSettingsData::Key_bool::ShowFPS, showFPS);
+		bool showFPS = true;
+		SettingsData::Load(SettingsData::Key_bool::ShowFPS, showFPS);
 		m_ILoveYouDemo->ShowFPS(showFPS);
 	}
 
 	WPARAM Run() {
+		using SettingsData = MyAppData::SettingsData;
 		const auto window = GetWindow();
 		ShowWindow(window, SW_SHOW);
 		m_WindowModeHelper->SetMode(m_WindowModeHelper->GetMode());
 		UpdateWindow(window);
 		m_ILoveYouDemo->Tick();
-		bool showHelpAtStatup;
-		if (!MyAppSettingsData::Load(MyAppSettingsData::Key_bool::ShowHelpAtStartup, showHelpAtStatup) || showHelpAtStatup) {
+		bool showHelpAtStatup{};
+		if (!SettingsData::Load(SettingsData::Key_bool::ShowHelpAtStartup, showHelpAtStatup) || showHelpAtStatup) {
 			MessageBoxW(nullptr, L"Window mode, resolution, FPS visibility and animations can be controlled in the context menu; glow & rotation of the heart image can be controlled with mouse. Pressing [Alt + Enter] toggles between windowed/borderless and full-screen mode.", L"Help", MB_OK);
 			if (!showHelpAtStatup)
-				MyAppSettingsData::Save(MyAppSettingsData::Key_bool::ShowHelpAtStartup, false);
+				SettingsData::Save(SettingsData::Key_bool::ShowHelpAtStartup, false);
 		}
 		MSG msg;
 		do
@@ -72,6 +74,7 @@ private:
 	LRESULT CALLBACK OnMessageReceived(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override {
 		using Hydr10n::Demos::ILoveYou;
 		using Hydr10n::WindowHelpers::WindowMode;
+		using SettingsData = MyAppData::SettingsData;
 		enum class MenuID {
 			WindowModeWindowed, WindowModeBorderless, WindowModeFullscreen,
 			ShowFPS, HideFPS,
@@ -128,23 +131,23 @@ private:
 			case MenuID::WindowModeWindowed: {
 				constexpr WindowMode WindowMode = WindowMode::Windowed;
 				if (m_WindowModeHelper->GetMode() != WindowMode && m_WindowModeHelper->SetMode(WindowMode))
-					MyAppSettingsData::Save(WindowMode);
+					SettingsData::Save(WindowMode);
 			}	break;
 			case MenuID::WindowModeBorderless: {
 				constexpr WindowMode WindowMode = WindowMode::Borderless;
 				if (m_WindowModeHelper->GetMode() != WindowMode && m_WindowModeHelper->SetMode(WindowMode))
-					MyAppSettingsData::Save(WindowMode);
+					SettingsData::Save(WindowMode);
 			}	break;
 			case MenuID::WindowModeFullscreen: {
 				constexpr WindowMode WindowMode = WindowMode::Fullscreen;
 				if (m_WindowModeHelper->GetMode() != WindowMode && m_WindowModeHelper->SetMode(WindowMode))
-					MyAppSettingsData::Save(WindowMode);
+					SettingsData::Save(WindowMode);
 			}	break;
 			case MenuID::ShowFPS:
 			case MenuID::HideFPS: {
 				const bool isFPSVisible = !m_ILoveYouDemo->IsFPSVisible();
 				m_ILoveYouDemo->ShowFPS(isFPSVisible);
-				MyAppSettingsData::Save(MyAppSettingsData::Key_bool::ShowFPS, isFPSVisible);
+				SettingsData::Save(SettingsData::Key_bool::ShowFPS, isFPSVisible);
 			}	break;
 			case MenuID::GlowPlayAnimation:
 			case MenuID::GlowPauseAnimation: m_ILoveYouDemo->ReverseAnimationState(ILoveYou::Animation::Glow); break;
@@ -161,7 +164,7 @@ private:
 				const auto outputSize = m_WindowModeHelper->GetOutputSize();
 				if (resolution != outputSize && m_WindowModeHelper->SetOutputSize(resolution)) {
 					m_ILoveYouDemo->OnWindowSizeChanged(resolution);
-					MyAppSettingsData::Save(resolution);
+					SettingsData::Save(resolution);
 				}
 			}	break;
 			}
@@ -187,7 +190,7 @@ private:
 		}	break;
 		case WM_SYSKEYDOWN: {
 			if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000 && m_WindowModeHelper->ToggleMode())
-				MyAppSettingsData::Save(m_WindowModeHelper->GetMode());
+				SettingsData::Save(m_WindowModeHelper->GetMode());
 		}	break;
 		case WM_MENUCHAR: return MAKELRESULT(0, MNC_CLOSE);
 		case WM_DESTROY: PostQuitMessage(0); break;

@@ -27,7 +27,7 @@
     <ClInclude Include="ILoveYouDemo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MyAppSettingsData.h">
+    <ClInclude Include="MyAppData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="StepTimer.h">
