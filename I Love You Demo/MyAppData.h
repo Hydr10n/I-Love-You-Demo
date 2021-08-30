@@ -66,7 +66,7 @@ struct MyAppData {
 			return true;
 		}
 
-		static SectionKeyPair ToSectionKeyPair(Key_bool val) {
+		static constexpr SectionKeyPair ToSectionKeyPair(Key_bool val) {
 			switch (val) {
 			case Key_bool::ShowFPS: return SectionKeyPair(Section::DisplaySettings, L"ShowFPS");
 			case Key_bool::ShowHelpAtStartup: return SectionKeyPair(Section::MiscellaneousSettings, L"ShowHelpAtStartup");
@@ -74,7 +74,7 @@ struct MyAppData {
 			}
 		}
 
-		static LPCWSTR ToString(Section val) {
+		static constexpr LPCWSTR ToString(Section val) {
 			switch (val) {
 			case Section::DisplaySettings: return L"Display";
 			case Section::MiscellaneousSettings: return L"Miscellaneous";
@@ -82,9 +82,9 @@ struct MyAppData {
 			}
 		}
 
-		static LPCWSTR ToString(bool val) { return val ? L"true" : L"false"; }
+		static constexpr LPCWSTR ToString(bool val) { return val ? L"true" : L"false"; }
 
-		static bool ToValue(LPCWSTR str, bool& val) {
+		static constexpr bool ToValue(LPCWSTR str, bool& val) {
 			const std::wstring wstr(str);
 			if (wstr == ToString(true))
 				val = true;
@@ -95,12 +95,12 @@ struct MyAppData {
 			return true;
 		}
 
-		static LPCWSTR ToString(Hydr10n::WindowHelpers::WindowMode val) {
+		static constexpr LPCWSTR ToString(Hydr10n::WindowHelpers::WindowMode val) {
 			constexpr LPCWSTR strs[]{ L"Windowed", L"Borderless", L"Fullscreen" };
 			return strs[static_cast<size_t>(val)];
 		}
 
-		static bool ToValue(LPCWSTR str, Hydr10n::WindowHelpers::WindowMode& val) {
+		static constexpr bool ToValue(LPCWSTR str, Hydr10n::WindowHelpers::WindowMode& val) {
 			using Hydr10n::WindowHelpers::WindowMode;
 			const std::wstring wstr(str);
 			if (wstr == ToString(WindowMode::Windowed))
