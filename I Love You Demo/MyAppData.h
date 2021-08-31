@@ -5,7 +5,7 @@
 #include <filesystem>
 
 struct MyAppData {
-	static class SettingsData {
+	static const class SettingsData {
 	public:
 		enum class Key_bool { ShowFPS, ShowHelpAtStartup };
 
