@@ -118,7 +118,6 @@ private:
 			AppendMenuW(menu, MF_POPUP, static_cast<UINT_PTR>(MenuID::Exit), L"Exit");
 			RECT rc{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 			if (rc.left == -1 && rc.top == -1) {
-				const auto hWnd = reinterpret_cast<HWND>(wParam);
 				GetClientRect(hWnd, &rc);
 				MapWindowRect(hWnd, HWND_DESKTOP, &rc);
 			}
@@ -126,8 +125,8 @@ private:
 			DestroyMenu(menu);
 		}	break;
 		case WM_COMMAND: {
-			const auto menuId = static_cast<MenuID>(wParam);
-			switch (menuId) {
+			const auto menuID = static_cast<MenuID>(LOWORD(wParam));
+			switch (menuID) {
 			case MenuID::WindowModeWindowed: {
 				constexpr WindowMode WindowMode = WindowMode::Windowed;
 				if (m_WindowModeHelper->GetMode() != WindowMode && m_WindowModeHelper->SetMode(WindowMode))
@@ -160,7 +159,7 @@ private:
 			case MenuID::ViewSourceCodeOnGitHub: ShellExecuteW(nullptr, L"open", L"https://github.com/Hydr10n/I-Love-You-Demo", nullptr, nullptr, SW_SHOW); break;
 			case MenuID::Exit: SendMessageW(hWnd, WM_CLOSE, 0, 0); break;
 			default: {
-				const auto& resolution = m_DisplayResolutions[static_cast<size_t>(menuId) - static_cast<size_t>(MenuID::FirstResolution)];
+				const auto& resolution = m_DisplayResolutions[static_cast<size_t>(menuID) - static_cast<size_t>(MenuID::FirstResolution)];
 				const auto outputSize = m_WindowModeHelper->GetOutputSize();
 				if (resolution != outputSize && m_WindowModeHelper->SetOutputSize(resolution)) {
 					m_ILoveYouDemo->OnWindowSizeChanged(resolution);

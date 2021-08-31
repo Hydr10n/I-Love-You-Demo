@@ -1,6 +1,6 @@
 /*
  * Header File: WindowHelpers.h
- * Last Update: 2021/08/13
+ * Last Update: 2021/08/31
  *
  * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
  */
@@ -11,7 +11,7 @@
 
 namespace Hydr10n {
 	namespace WindowHelpers {
-		constexpr void WINAPI CenterRect(_In_ const RECT& border, _Inout_ RECT& rect) {
+		constexpr void CenterRect(_In_ const RECT& border, _Inout_ RECT& rect) {
 			const auto rectWidth = rect.right - rect.left, rectHeight = rect.bottom - rect.top;
 			rect.left = (border.right + border.left - rectWidth) / 2;
 			rect.top = (border.bottom + border.top - rectHeight) / 2;
