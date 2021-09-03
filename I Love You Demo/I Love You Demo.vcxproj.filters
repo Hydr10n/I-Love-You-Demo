@@ -33,6 +33,21 @@
     <ClInclude Include="StepTimer.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="WindowHelpers.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectXHelpers.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="ErrorHelpers.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DisplayHelpers.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="I Love You Demo.rc">
@@ -41,6 +56,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MyAppData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

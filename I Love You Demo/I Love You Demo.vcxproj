@@ -57,11 +57,7 @@
   </ImportGroup>
   <ImportGroup Label="Shared">
     <Import Project="..\Windows\Windows.vcxitems" Label="Shared" />
-    <Import Project="..\DirectXHelpers\DirectXHelpers.vcxitems" Label="Shared" />
     <Import Project="..\Data\Data.vcxitems" Label="Shared" />
-    <Import Project="..\ErrorHelpers\ErrorHelpers.vcxitems" Label="Shared" />
-    <Import Project="..\DisplayHelpers\DisplayHelpers.vcxitems" Label="Shared" />
-    <Import Project="..\WindowHelpers\WindowHelpers.vcxitems" Label="Shared" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -150,13 +146,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="MyAppData.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DirectXHelpers.h" />
+    <ClInclude Include="DisplayHelpers.h" />
+    <ClInclude Include="ErrorHelpers.h" />
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="MyAppData.h" />
+    <ClInclude Include="pch.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ILoveYouDemo.h" />
     <ClInclude Include="StepTimer.h" />
+    <ClInclude Include="WindowHelpers.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="I Love You Demo.rc" />
