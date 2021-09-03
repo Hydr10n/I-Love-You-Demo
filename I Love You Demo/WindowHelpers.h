@@ -60,7 +60,7 @@ namespace WindowHelpers {
 		SIZE GetOutputSize() const { return m_outputSize; }
 
 		BOOL SetMode(WindowMode mode) {
-			const WindowMode currentMode = m_currentMode;
+			const auto currentMode = m_currentMode;
 
 			m_currentMode = mode;
 
