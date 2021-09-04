@@ -1,6 +1,6 @@
 /*
  * Header File: BaseWindow.h
- * Last Update: 2021/08/12
+ * Last Update: 2021/09/04
  *
  * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
  */
@@ -20,7 +20,9 @@ namespace Hydr10n {
 			virtual ~BaseWindow() {
 				if (m_hWnd != nullptr) {
 					SetWindowLongPtrW(m_hWnd, GWLP_USERDATA, 0);
+
 					DestroyWindow(m_hWnd);
+
 					UnregisterClassW(m_wndClassEx.lpszClassName, m_wndClassEx.hInstance);
 				}
 			}
@@ -44,6 +46,7 @@ namespace Hydr10n {
 					const auto _this = reinterpret_cast<decltype(this)>(uMsg == WM_NCCREATE ? reinterpret_cast<LPCREATESTRUCT>(lParam)->lpCreateParams : reinterpret_cast<LPVOID>(GetWindowLongPtrW(hWnd, GWLP_USERDATA)));
 					if (_this != nullptr)
 						return _this->OnMessageReceived(hWnd, uMsg, wParam, lParam);
+
 					return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 				};
 			}
@@ -55,17 +58,25 @@ namespace Hydr10n {
 			BOOL Create(LPCWSTR lpWindowName, DWORD dwExStyle, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu = nullptr) {
 				if (m_hWnd != nullptr) {
 					SetLastError(ERROR_ALREADY_INITIALIZED);
+
 					return FALSE;
 				}
+
 				if (!RegisterClassExW(&m_wndClassEx))
 					return FALSE;
+
 				if ((m_hWnd = CreateWindowExW(dwExStyle, m_wndClassEx.lpszClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, m_wndClassEx.hInstance, this)) == nullptr) {
 					const auto lastError = GetLastError();
+
 					UnregisterClassW(m_wndClassEx.lpszClassName, m_wndClassEx.hInstance);
+
 					SetLastError(lastError);
+
 					return FALSE;
 				}
+
 				SetWindowLongPtrW(m_hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+
 				return TRUE;
 			}
 

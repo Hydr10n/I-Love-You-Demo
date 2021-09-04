@@ -25,14 +25,18 @@ namespace WindowHelpers {
 		return FALSE;
 	}
 
-	enum class WindowMode { Windowed, Borderless, Fullscreen };
-
 	class WindowModeHelper {
 	public:
-		WindowModeHelper(HWND hMainWindow, const SIZE& outputSize, WindowMode mode, DWORD dwStyle, DWORD dwExStyle, BOOL bHasMenu) : m_hWnd(hMainWindow), m_outputSize(outputSize), m_currentMode(mode), m_lastMode(mode == WindowMode::Fullscreen ? WindowMode::Windowed : WindowMode::Fullscreen), m_Style(dwStyle), m_ExStyle(dwExStyle), m_HasMenu(bHasMenu) {}
+		enum class Mode { Windowed, Borderless, Fullscreen };
+
+		WindowModeHelper(HWND hMainWindow, const SIZE& outputSize, Mode mode = Mode::Windowed, DWORD dwStyle = WS_OVERLAPPEDWINDOW, DWORD dwExStyle = 0, BOOL bHasMenu = FALSE) : m_hWnd(hMainWindow), m_currentMode(mode), m_lastMode(mode == Mode::Fullscreen ? Mode::Windowed : Mode::Fullscreen), m_Style(dwStyle), m_ExStyle(dwExStyle), m_HasMenu(bHasMenu) {
+			SetOutputSize(outputSize);
+
+			SetMode(mode);
+		}
 
 		BOOL SetOutputSize(const SIZE& size) {
-			if (m_currentMode == WindowMode::Fullscreen) {
+			if (m_currentMode == Mode::Fullscreen) {
 				m_outputSize = size;
 
 				SetLastError(ERROR_SUCCESS);
@@ -47,7 +51,7 @@ namespace WindowHelpers {
 
 			RECT rc{ 0, 0, size.cx, size.cy };
 			CenterRect(monitorInfo.rcMonitor, rc);
-			if (!AdjustWindowRectEx(&rc, m_currentMode == WindowMode::Windowed ? m_Style : m_Style & ~WS_OVERLAPPEDWINDOW, m_HasMenu, m_ExStyle))
+			if (!AdjustWindowRectEx(&rc, m_currentMode == Mode::Windowed ? m_Style : m_Style & ~WS_OVERLAPPEDWINDOW, m_HasMenu, m_ExStyle))
 				return FALSE;
 
 			const auto ret = SetWindowPos(m_hWnd, HWND_TOP, static_cast<int>(rc.left), static_cast<int>(rc.top), static_cast<int>(rc.right - rc.left), static_cast<int>(rc.bottom - rc.top), SWP_NOZORDER | SWP_FRAMECHANGED);
@@ -59,14 +63,14 @@ namespace WindowHelpers {
 
 		SIZE GetOutputSize() const { return m_outputSize; }
 
-		BOOL SetMode(WindowMode mode) {
+		BOOL SetMode(Mode mode) {
 			const auto currentMode = m_currentMode;
 
 			m_currentMode = mode;
 
-			const auto ret = (SetWindowLongPtrW(m_hWnd, GWL_EXSTYLE, static_cast<LONG_PTR>(mode == WindowMode::Fullscreen ? m_ExStyle | WS_EX_TOPMOST : m_ExStyle)) || GetLastError() == ERROR_SUCCESS) && (SetWindowLongPtrW(m_hWnd, GWL_STYLE, static_cast<LONG_PTR>(mode == WindowMode::Windowed ? m_Style : m_Style & ~WS_OVERLAPPEDWINDOW)) || GetLastError() == ERROR_SUCCESS) && SetOutputSize(m_outputSize);
+			const auto ret = (SetWindowLongPtrW(m_hWnd, GWL_EXSTYLE, static_cast<LONG_PTR>(mode == Mode::Fullscreen ? m_ExStyle | WS_EX_TOPMOST : m_ExStyle)) || GetLastError() == ERROR_SUCCESS) && (SetWindowLongPtrW(m_hWnd, GWL_STYLE, static_cast<LONG_PTR>(mode == Mode::Windowed ? m_Style : m_Style & ~WS_OVERLAPPEDWINDOW)) || GetLastError() == ERROR_SUCCESS) && SetOutputSize(m_outputSize);
 			if (ret) {
-				ShowWindow(m_hWnd, mode == WindowMode::Fullscreen ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
+				ShowWindow(m_hWnd, mode == Mode::Fullscreen ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
 
 				m_lastMode = currentMode == mode ? m_lastMode : currentMode;
 			}
@@ -76,9 +80,9 @@ namespace WindowHelpers {
 			return ret;
 		}
 
-		BOOL ToggleMode() { return SetMode(m_currentMode == WindowMode::Fullscreen ? m_lastMode : WindowMode::Fullscreen); }
+		BOOL ToggleMode() { return SetMode(m_currentMode == Mode::Fullscreen ? m_lastMode : Mode::Fullscreen); }
 
-		WindowMode GetMode() const { return m_currentMode; }
+		Mode GetMode() const { return m_currentMode; }
 
 	private:
 		const DWORD m_ExStyle, m_Style;
@@ -87,7 +91,7 @@ namespace WindowHelpers {
 
 		const HWND m_hWnd;
 
-		WindowMode m_lastMode, m_currentMode;
+		Mode m_lastMode = Mode::Fullscreen, m_currentMode = Mode::Windowed;
 
 		SIZE m_outputSize;
 	};

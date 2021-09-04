@@ -23,8 +23,7 @@ namespace DisplayHelpers {
 		friend bool operator!=(const SIZE& lhs, const SIZE& rhs) { return !(Resolution{ lhs.cx, lhs.cy } == rhs); }
 	};
 
-	inline std::vector<Resolution> WINAPI GetDisplayResolutions(LPCWSTR lpszDeviceName = nullptr) {
-		std::vector<Resolution> resolutions;
+	inline BOOL WINAPI GetDisplayResolutions(std::vector<Resolution>& resolutions, LPCWSTR lpszDeviceName = nullptr) {
 		DEVMODEW devMode;
 		devMode.dmSize = sizeof(devMode);
 		for (DWORD i = 0; EnumDisplaySettingsW(lpszDeviceName, i++, &devMode);) {
@@ -33,6 +32,7 @@ namespace DisplayHelpers {
 			if (std::find(resolutions.cbegin(), iteratorEnd, resolution) == iteratorEnd)
 				resolutions.push_back(resolution);
 		}
-		return resolutions;
+
+		return GetLastError() == ERROR_MOD_NOT_FOUND;
 	}
 }
