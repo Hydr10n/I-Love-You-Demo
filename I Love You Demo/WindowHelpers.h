@@ -46,17 +46,14 @@ namespace WindowHelpers {
 
 			MONITORINFO monitorInfo;
 			monitorInfo.cbSize = sizeof(monitorInfo);
-			if (!GetMonitorInfoW(MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST), &monitorInfo))
-				return FALSE;
+			if (!GetMonitorInfoW(MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST), &monitorInfo)) return FALSE;
 
 			RECT rc{ 0, 0, size.cx, size.cy };
 			CenterRect(monitorInfo.rcMonitor, rc);
-			if (!AdjustWindowRectEx(&rc, m_currentMode == Mode::Windowed ? m_Style : m_Style & ~WS_OVERLAPPEDWINDOW, m_HasMenu, m_ExStyle))
-				return FALSE;
+			if (!AdjustWindowRectEx(&rc, m_currentMode == Mode::Windowed ? m_Style : m_Style & ~WS_OVERLAPPEDWINDOW, m_HasMenu, m_ExStyle)) return FALSE;
 
 			const auto ret = SetWindowPos(m_hWnd, HWND_TOP, static_cast<int>(rc.left), static_cast<int>(rc.top), static_cast<int>(rc.right - rc.left), static_cast<int>(rc.bottom - rc.top), SWP_NOZORDER | SWP_FRAMECHANGED);
-			if (ret)
-				m_outputSize = size;
+			if (ret) m_outputSize = size;
 
 			return ret;
 		}
@@ -74,8 +71,7 @@ namespace WindowHelpers {
 
 				m_lastMode = currentMode == mode ? m_lastMode : currentMode;
 			}
-			else
-				m_currentMode = currentMode;
+			else m_currentMode = currentMode;
 
 			return ret;
 		}

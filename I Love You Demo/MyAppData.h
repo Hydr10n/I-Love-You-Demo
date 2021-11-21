@@ -51,8 +51,7 @@ struct MyAppData {
 		static bool RemoveSubstringStartingWithSpace(wchar_t* str) {
 			const std::wstring wstr(str);
 			const auto iteratorBegin = wstr.cbegin(), iteratorEnd = wstr.cend(), iterator = std::find_if(iteratorBegin, iteratorEnd, [](wchar_t ch) { return iswspace((wint_t)ch); });
-			if (iterator == iteratorEnd)
-				return false;
+			if (iterator == iteratorEnd) return false;
 
 			str[(iterator - iteratorBegin)] = 0;
 
@@ -73,14 +72,10 @@ struct MyAppData {
 			using WindowMode = WindowHelpers::WindowModeHelper::Mode;
 
 			const std::wstring wstr(str);
-			if (wstr == ToString(WindowMode::Windowed))
-				val = WindowMode::Windowed;
-			else if (wstr == ToString(WindowMode::Borderless))
-				val = WindowMode::Borderless;
-			else if (wstr == ToString(WindowMode::Fullscreen))
-				val = WindowMode::Fullscreen;
-			else
-				return false;
+			if (wstr == ToString(WindowMode::Windowed)) val = WindowMode::Windowed;
+			else if (wstr == ToString(WindowMode::Borderless)) val = WindowMode::Borderless;
+			else if (wstr == ToString(WindowMode::Fullscreen)) val = WindowMode::Fullscreen;
+			else return false;
 
 			return true;
 		}

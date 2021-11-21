@@ -5,16 +5,12 @@ VisualStudioVersion = 17.0.31521.260
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "I Love You Demo", "I Love You Demo\I Love You Demo.vcxproj", "{609512C6-CC3F-4376-BB5B-CB8F1E89A613}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Windows", "Windows\Windows.vcxitems", "{A5D3DEB5-8D1A-4E75-B912-7D01A110AC7F}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Data", "Data\Data.vcxitems", "{926F440C-2F0A-4452-A781-66226763BEBA}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Data\Data.vcxitems*{609512c6-cc3f-4376-bb5b-cb8f1e89a613}*SharedItemsImports = 4
-		Windows\Windows.vcxitems*{609512c6-cc3f-4376-bb5b-cb8f1e89a613}*SharedItemsImports = 4
 		Data\Data.vcxitems*{926f440c-2f0a-4452-a781-66226763beba}*SharedItemsImports = 9
-		Windows\Windows.vcxitems*{a5d3deb5-8d1a-4e75-b912-7d01a110ac7f}*SharedItemsImports = 9
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

@@ -1,6 +1,6 @@
 /*
  * Header File: AppData.h
- * Last Update: 2021/09/03
+ * Last Update: 2021/11/21
  *
  * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
  */
@@ -36,8 +36,7 @@ namespace Hydr10n {
 				if (Load(lpSection, lpKey, buf, ARRAYSIZE(buf))) {
 					WCHAR ch;
 					std::wistringstream istringstream(buf);
-					if ((istringstream >> data) && !(istringstream >> ch))
-						return TRUE;
+					if ((istringstream >> data) && !(istringstream >> ch)) return TRUE;
 
 					SetLastError(ERROR_INVALID_DATA);
 				}

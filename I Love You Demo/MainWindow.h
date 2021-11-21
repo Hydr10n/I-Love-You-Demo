@@ -12,9 +12,9 @@
 
 #define Scale(PixelCount, DPI) MulDiv(static_cast<int>(PixelCount), static_cast<int>(DPI), USER_DEFAULT_SCREEN_DPI)
 
-class MainWindow : public Hydr10n::Windows::BaseWindow {
+class MainWindow : public Windows::BaseWindow {
 public:
-	MainWindow() noexcept(false) : BaseWindow(L"Direct2D") {
+	MainWindow() noexcept(false) : BaseWindow(WNDCLASSEXW{ .hIcon = LoadIcon(nullptr, IDI_APPLICATION), .lpszClassName = L"Direct2D" }) {
 		using ErrorHelpers::ThrowIfFailed;
 		using SettingsData = MyAppData::Settings;
 
@@ -25,8 +25,7 @@ public:
 		SIZE outputSize;
 		if (SettingsData::Load(outputSize)) {
 			const auto& maxDisplayResolution = *max_element(m_displayResolutions.cbegin(), m_displayResolutions.cend());
-			if (outputSize > maxDisplayResolution)
-				outputSize = maxDisplayResolution;
+			if (outputSize > maxDisplayResolution) outputSize = maxDisplayResolution;
 		}
 		else {
 			Microsoft::WRL::ComPtr<ID2D1Factory> d2dFactory;
@@ -52,9 +51,7 @@ public:
 
 		m_windowModeHelper = std::make_unique<decltype(m_windowModeHelper)::element_type>(window, m_iLoveYouDemo->GetOutputSize());
 		WindowHelpers::WindowModeHelper::Mode windowMode;
-		if (SettingsData::Load(windowMode)) {
-			m_windowModeHelper->SetMode(windowMode);
-		}
+		if (SettingsData::Load(windowMode)) m_windowModeHelper->SetMode(windowMode);
 
 		UpdateWindow(window);
 
@@ -63,8 +60,7 @@ public:
 		bool showHelpAtStatup{};
 		if (!SettingsData::Load(SettingsData::Key_bool::ShowHelpAtStartup, showHelpAtStatup) || showHelpAtStatup) {
 			MessageBoxW(nullptr, L"Window mode, resolution, FPS visibility and animations can be controlled in the context menu; glow & rotation of the heart image can be controlled with mouse. Pressing [Alt + Enter] toggles between windowed/borderless and full-screen mode.", L"Help", MB_OK);
-			if (!showHelpAtStatup)
-				SettingsData::Save(SettingsData::Key_bool::ShowHelpAtStartup, false);
+			if (!showHelpAtStatup) SettingsData::Save(SettingsData::Key_bool::ShowHelpAtStartup, false);
 		}
 		MSG msg;
 		do
@@ -116,8 +112,7 @@ private:
 			int i = 0;
 
 			const auto outputSize = m_windowModeHelper->GetOutputSize();
-			for (const auto& resolution : m_displayResolutions)
-				AppendMenuW(hMenuResolution, MF_STRING | (outputSize == resolution ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(static_cast<size_t>(MenuID::FirstResolution) + i++), (std::to_wstring(resolution.cx) + L" × " + std::to_wstring(resolution.cy)).c_str());
+			for (const auto& resolution : m_displayResolutions) AppendMenuW(hMenuResolution, MF_STRING | (outputSize == resolution ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(static_cast<size_t>(MenuID::FirstResolution) + i++), (std::to_wstring(resolution.cx) + L" × " + std::to_wstring(resolution.cy)).c_str());
 
 			const auto isFPSVisible = m_iLoveYouDemo->IsFPSVisible();
 			AppendMenuW(menu, MF_STRING | (isFPSVisible ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(isFPSVisible ? MenuID::HideFPS : MenuID::ShowFPS), L"Show FPS");
@@ -161,20 +156,17 @@ private:
 			switch (menuID) {
 			case MenuID::WindowModeWindowed: {
 				constexpr WindowMode WindowMode = WindowMode::Windowed;
-				if (m_windowModeHelper->GetMode() != WindowMode && m_windowModeHelper->SetMode(WindowMode))
-					SettingsData::Save(WindowMode);
+				if (m_windowModeHelper->GetMode() != WindowMode && m_windowModeHelper->SetMode(WindowMode)) SettingsData::Save(WindowMode);
 			}	break;
 
 			case MenuID::WindowModeBorderless: {
 				constexpr WindowMode WindowMode = WindowMode::Borderless;
-				if (m_windowModeHelper->GetMode() != WindowMode && m_windowModeHelper->SetMode(WindowMode))
-					SettingsData::Save(WindowMode);
+				if (m_windowModeHelper->GetMode() != WindowMode && m_windowModeHelper->SetMode(WindowMode)) SettingsData::Save(WindowMode);
 			}	break;
 
 			case MenuID::WindowModeFullscreen: {
 				constexpr WindowMode WindowMode = WindowMode::Fullscreen;
-				if (m_windowModeHelper->GetMode() != WindowMode && m_windowModeHelper->SetMode(WindowMode))
-					SettingsData::Save(WindowMode);
+				if (m_windowModeHelper->GetMode() != WindowMode && m_windowModeHelper->SetMode(WindowMode)) SettingsData::Save(WindowMode);
 			}	break;
 
 			case MenuID::ShowFPS:
@@ -244,8 +236,7 @@ private:
 		}	break;
 
 		case WM_SYSKEYDOWN: {
-			if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000 && m_windowModeHelper->ToggleMode())
-				SettingsData::Save(m_windowModeHelper->GetMode());
+			if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000 && m_windowModeHelper->ToggleMode()) SettingsData::Save(m_windowModeHelper->GetMode());
 		}	break;
 
 		case WM_MENUCHAR: return MAKELRESULT(0, MNC_CLOSE);

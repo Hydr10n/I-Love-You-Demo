@@ -48,6 +48,9 @@
     <ClInclude Include="DisplayHelpers.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="BaseWindow.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="I Love You Demo.rc">

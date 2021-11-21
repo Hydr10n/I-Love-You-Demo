@@ -1,6 +1,6 @@
 /*
  * Header File: ILoveYouDemo.h
- * Last Update: 2021/09/04
+ * Last Update: 2021/11/21
  *
  * Copyright (C) Hydr10n@GitHub. All Rights Reserved.
  */
@@ -35,17 +35,13 @@ namespace Hydr10n {
 			SIZE GetOutputSize() const { return m_outputSize; }
 
 			void Tick() {
-				m_stepTimer.Tick([&] {
-					if (m_isRunning)
-						Update();
-					});
+				m_stepTimer.Tick([&] { if (m_isRunning) Update(); });
 
 				Render();
 			}
 
 			void OnWindowSizeChanged(const SIZE& size) {
-				if (m_outputSize.cx == size.cx && m_outputSize.cy == size.cy)
-					return;
+				if (m_outputSize.cx == size.cx && m_outputSize.cy == size.cy) return;
 
 				m_outputSize = size;
 
@@ -83,10 +79,8 @@ namespace Hydr10n {
 			bool IsFPSVisible() const { return m_isFPSVisible; }
 
 			void ReverseAnimationState(Animation animation) {
-				if (m_animations.contains(animation))
-					m_animations.erase(animation);
-				else
-					m_animations.insert(animation);
+				if (m_animations.contains(animation)) m_animations.erase(animation);
+				else m_animations.insert(animation);
 			}
 
 			const std::set<Animation>& GetAnimations() const { return m_animations; }
@@ -208,7 +202,7 @@ namespace Hydr10n {
 
 				const auto rect = RectF(0, m_d2dSize.height * (0.5f + HeartScale / 2), m_d2dSize.width, m_d2dSize.height);
 				ThrowIfFailed(D2D1DrawTextNormal(m_d2dDeviceContext.Get(), L"Segoe UI", 24 * m_scale, DWRITE_TEXT_ALIGNMENT_CENTER, DWRITE_PARAGRAPH_ALIGNMENT_CENTER, L"Copyright © Programmer-Yang_Xun@outlook.com", ColorF(ColorF::White), &rect));
-				
+
 				m_d2dDeviceContext->SetTarget(pD2dBitmap1);
 
 				m_d2dDeviceContext->Clear(ColorF(ColorF::White, 0));
@@ -216,6 +210,7 @@ namespace Hydr10n {
 				DrawHeart(m_d2dDeviceContext.Get(), HeartScale);
 
 				ThrowIfFailed(D2D1DrawTextNormal(m_d2dDeviceContext.Get(), L"Comic Sans MS", 46 * m_scale, DWRITE_TEXT_ALIGNMENT_CENTER, DWRITE_PARAGRAPH_ALIGNMENT_CENTER, L"I LOVE YOU\nFOREVER", ColorF(ColorF::White)));
+
 				ThrowIfFailed(m_d2dDeviceContext->EndDraw());
 
 				m_d2dDeviceContext->SetTarget(d2dImage.Get());
@@ -235,16 +230,13 @@ namespace Hydr10n {
 			}
 
 			void Update() {
-				if (m_stepTimer.GetFrameCount() < 2)
-					return;
+				if (m_stepTimer.GetFrameCount() < 2) return;
 
 				if (m_animations.contains(Animation::Glow)) {
 					SetForegroundGlowRadiusScale(m_foregroundGlowRadiusScale + (m_isGlowFadeIn ? 1 : -1) * CalculateAverageVelocity(1, GlowAnimationDuration, static_cast<float>(TargetFPS)));
 
-					if (m_foregroundGlowRadiusScale >= 1)
-						m_isGlowFadeIn = false;
-					else if (m_foregroundGlowRadiusScale <= 0)
-						m_isGlowFadeIn = true;
+					if (m_foregroundGlowRadiusScale >= 1) m_isGlowFadeIn = false;
+					else if (m_foregroundGlowRadiusScale <= 0) m_isGlowFadeIn = true;
 				}
 
 				if (m_animations.contains(Animation::Rotation)) {
@@ -255,8 +247,7 @@ namespace Hydr10n {
 			}
 
 			void Render() {
-				if (!m_stepTimer.GetFrameCount())
-					return;
+				if (!m_stepTimer.GetFrameCount()) return;
 
 				m_d2dDeviceContext->BeginDraw();
 
@@ -264,8 +255,7 @@ namespace Hydr10n {
 
 				m_d2dDeviceContext->DrawImage(m_d2dEffect3DPerspectiveTransform.Get());
 
-				if (m_isFPSVisible)
-					DrawFPS();
+				if (m_isFPSVisible) DrawFPS();
 
 				ErrorHelpers::ThrowIfFailed(m_d2dDeviceContext->EndDraw());
 			}

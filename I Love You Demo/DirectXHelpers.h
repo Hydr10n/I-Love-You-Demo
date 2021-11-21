@@ -12,8 +12,7 @@
 namespace DirectXHelpers {
 	inline HRESULT WINAPI D2D1CreateHwndRenderTarget(ID2D1Factory* pD2dFactory, HWND hWnd, ID2D1HwndRenderTarget** ppD2dHwndRenderTarget, UINT32 width = 0, UINT32 height = 0) {
 		D2D1_SIZE_U d2dSize;
-		if (width && height)
-			d2dSize = D2D1::SizeU(width, height);
+		if (width && height) d2dSize = D2D1::SizeU(width, height);
 		else {
 			RECT rc;
 			if (!GetClientRect(hWnd, &rc))

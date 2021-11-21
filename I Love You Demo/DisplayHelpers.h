@@ -5,10 +5,8 @@
 namespace DisplayHelpers {
 	struct Resolution : SIZE {
 		friend bool operator<(const SIZE& lhs, const SIZE& rhs) {
-			if (lhs.cx < rhs.cx)
-				return true;
-			if (lhs.cx > rhs.cx)
-				return false;
+			if (lhs.cx < rhs.cx) return true;
+			if (lhs.cx > rhs.cx) return false;
 			return lhs.cy < rhs.cy;
 		}
 
@@ -29,8 +27,7 @@ namespace DisplayHelpers {
 		for (DWORD i = 0; EnumDisplaySettingsW(lpszDeviceName, i++, &devMode);) {
 			const auto& iteratorEnd = resolutions.cend();
 			const Resolution resolution{ static_cast<LONG>(devMode.dmPelsWidth), static_cast<LONG>(devMode.dmPelsHeight) };
-			if (std::find(resolutions.cbegin(), iteratorEnd, resolution) == iteratorEnd)
-				resolutions.push_back(resolution);
+			if (std::find(resolutions.cbegin(), iteratorEnd, resolution) == iteratorEnd) resolutions.push_back(resolution);
 		}
 
 		return GetLastError() == ERROR_MOD_NOT_FOUND;
