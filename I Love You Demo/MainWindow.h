@@ -63,13 +63,13 @@ public:
 			if (!showHelpAtStatup) SettingsData::Save(SettingsData::Key_bool::ShowHelpAtStartup, false);
 		}
 		MSG msg;
-		do
+		do {
 			if (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE)) {
 				TranslateMessage(&msg);
 				DispatchMessageW(&msg);
 			}
-			else
-				m_iLoveYouDemo->Tick();
+			else m_iLoveYouDemo->Tick();
+		}
 		while (msg.message != WM_QUIT);
 
 		return msg.wParam;
