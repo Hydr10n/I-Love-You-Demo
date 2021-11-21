@@ -31,6 +31,8 @@ namespace Windows {
 
 			if (m_wndClassEx.hInstance == nullptr) m_wndClassEx.hInstance = GetModuleHandle(nullptr);
 
+			if (m_wndClassEx.hCursor == nullptr) m_wndClassEx.hCursor = LoadCursor(nullptr, IDC_ARROW);
+
 			if (m_wndClassEx.hbrBackground == nullptr) m_wndClassEx.hbrBackground = GetStockBrush(WHITE_BRUSH);
 
 			if (m_wndClassEx.lpfnWndProc == nullptr) m_wndClassEx.lpfnWndProc = [](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
