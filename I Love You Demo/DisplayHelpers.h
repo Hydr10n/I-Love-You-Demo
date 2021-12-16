@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Windows.h>
+
 #include <vector>
 
 namespace DisplayHelpers {
@@ -30,6 +32,7 @@ namespace DisplayHelpers {
 			if (std::find(resolutions.cbegin(), iteratorEnd, resolution) == iteratorEnd) resolutions.push_back(resolution);
 		}
 
-		return GetLastError() == ERROR_MOD_NOT_FOUND;
+		const auto lastError = GetLastError();
+		return lastError == ERROR_SUCCESS || GetLastError() == ERROR_MOD_NOT_FOUND;
 	}
 }

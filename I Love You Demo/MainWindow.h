@@ -45,23 +45,12 @@ public:
 	}
 
 	WPARAM Run() {
-		using SettingsData = MyAppData::Settings;
+		using WindowMode = WindowHelpers::WindowModeHelper::Mode;
 
-		const auto window = GetWindow();
+		m_windowModeHelper = std::make_unique<decltype(m_windowModeHelper)::element_type>(GetWindow(), m_iLoveYouDemo->GetOutputSize(), WindowMode::Windowed, WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX);
+		WindowMode windowMode;
+		if (MyAppData::Settings::Load(windowMode)) m_windowModeHelper->SetMode(windowMode);
 
-		m_windowModeHelper = std::make_unique<decltype(m_windowModeHelper)::element_type>(window, m_iLoveYouDemo->GetOutputSize());
-		WindowHelpers::WindowModeHelper::Mode windowMode;
-		if (SettingsData::Load(windowMode)) m_windowModeHelper->SetMode(windowMode);
-
-		UpdateWindow(window);
-
-		m_iLoveYouDemo->Tick();
-
-		bool showHelpAtStatup{};
-		if (!SettingsData::Load(SettingsData::Key_bool::ShowHelpAtStartup, showHelpAtStatup) || showHelpAtStatup) {
-			MessageBoxW(nullptr, L"Window mode, resolution, FPS visibility and animations can be controlled in the context menu; glow & rotation of the heart image can be controlled with mouse. Pressing [Alt + Enter] toggles between windowed/borderless and full-screen mode.", L"Help", MB_OK);
-			if (!showHelpAtStatup) SettingsData::Save(SettingsData::Key_bool::ShowHelpAtStartup, false);
-		}
 		MSG msg;
 		do {
 			if (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE)) {
@@ -69,8 +58,7 @@ public:
 				DispatchMessageW(&msg);
 			}
 			else m_iLoveYouDemo->Tick();
-		}
-		while (msg.message != WM_QUIT);
+		} while (msg.message != WM_QUIT);
 
 		return msg.wParam;
 	}
@@ -109,10 +97,9 @@ private:
 			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::Borderless ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(MenuID::WindowModeBorderless), L"Borderless");
 			AppendMenuW(hMenuWindowMode, MF_STRING | (mode == WindowMode::Fullscreen ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(MenuID::WindowModeFullscreen), L"Fullscreen");
 			AppendMenuW(menu, MF_POPUP, reinterpret_cast<UINT_PTR>(hMenuResolution), L"Resolution");
-			int i = 0;
 
 			const auto outputSize = m_windowModeHelper->GetOutputSize();
-			for (const auto& resolution : m_displayResolutions) AppendMenuW(hMenuResolution, MF_STRING | (outputSize == resolution ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(static_cast<size_t>(MenuID::FirstResolution) + i++), (std::to_wstring(resolution.cx) + L" × " + std::to_wstring(resolution.cy)).c_str());
+			for (size_t size = m_displayResolutions.size(), i = 0; i < size; i++) AppendMenuW(hMenuResolution, MF_STRING | (outputSize == m_displayResolutions[i] ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(static_cast<size_t>(MenuID::FirstResolution) + i), (std::to_wstring(m_displayResolutions[i].cx) + L" × " + std::to_wstring(m_displayResolutions[i].cy)).c_str());
 
 			const auto isFPSVisible = m_iLoveYouDemo->IsFPSVisible();
 			AppendMenuW(menu, MF_STRING | (isFPSVisible ? MF_CHECKED : MF_UNCHECKED), static_cast<UINT_PTR>(isFPSVisible ? MenuID::HideFPS : MenuID::ShowFPS), L"Show FPS");

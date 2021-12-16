@@ -9,7 +9,7 @@
 struct MyAppData {
 	class Settings {
 	public:
-		enum class Key_bool { ShowFPS, ShowHelpAtStartup };
+		enum class Key_bool { ShowFPS };
 
 		static BOOL Save(Key_bool key, bool data) {
 			const auto sectionKeyPair = ToSectionKeyPair(key);
@@ -61,7 +61,6 @@ struct MyAppData {
 		static constexpr SectionKeyPair ToSectionKeyPair(Key_bool val) {
 			switch (val) {
 			case Key_bool::ShowFPS: return SectionKeyPair(Sections::Display, L"ShowFPS");
-			case Key_bool::ShowHelpAtStartup: return SectionKeyPair(Sections::Miscellaneous, L"ShowHelpAtStartup");
 			default: throw;
 			}
 		}
